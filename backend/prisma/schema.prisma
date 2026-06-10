@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PARTICIPANT
+  ORGANIZER
+}
+
+enum EventCategory {
+  PALESTRA
+  WORKSHOP
+  MINICURSO
+  SEMINARIO
+}
+
+enum EventStatus {
+  AVAILABLE
+  FULL
+  FINISHED
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events        Event[]        @relation("OrganizerEvents")
+  registrations Registration[]
+
+  @@map("users")
+}
+
+model Event {
+  id          String        @id @default(uuid())
+  name        String
+  description String
+  category    EventCategory
+  date        DateTime
+  location    String
+  totalSlots  Int
+  usedSlots   Int           @default(0)
+  status      EventStatus   @default(AVAILABLE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  organizerId   String
+  organizer     User           @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  registrations Registration[]
+
+  @@map("events")
+}
+
+model Registration {
+  id        String             @id @default(uuid())
+  status    RegistrationStatus @default(CONFIRMED)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  userId  String
+  eventId String
+  user    User  @relation(fields: [userId], references: [id])
+  event   Event @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+  @@map("registrations")
+}

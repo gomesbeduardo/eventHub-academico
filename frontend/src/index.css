@@ -1,0 +1,50 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+}
+
+.auth-container {
+  max-width: 400px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+
+.auth-container h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.auth-container h2 { font-size: 1.1rem; color: #6b7280; margin-bottom: 1.5rem; }
+
+form { display: flex; flex-direction: column; gap: 0.75rem; }
+
+input, select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  width: 100%;
+}
+
+input:focus, select:focus { outline: 2px solid #6366f1; border-color: transparent; }
+
+button {
+  padding: 0.625rem 1.25rem;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+button:hover { background: #4f46e5; }
+
+.error { color: #dc2626; font-size: 0.875rem; }
+
+@media (max-width: 640px) {
+  .auth-container { margin: 1rem; }
+}
