@@ -2,7 +2,7 @@
 
 > Plataforma web de gerenciamento de eventos acadêmicos com módulo de BI e recomendações personalizadas.
 
-**Versão:** 2.0 · **Disciplina:** Desenvolvimento de Sistemas I · **Status:** Em desenvolvimento
+**Versão:** 2.0 · **Disciplina:** Análise e Projeto de Sistemas · **Status:** Em desenvolvimento
 
 ---
 
