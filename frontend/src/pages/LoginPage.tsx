@@ -1,38 +1,134 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
+
+function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { dark, toggle } = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email, password });
       login(data.token, data.user);
       navigate("/");
     } catch {
-      setError("Credenciais inválidas");
+      setError("Credenciais inválidas. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="auth-container">
-      <h1>EventHub Acadêmico</h1>
-      <h2>Entrar</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        {error && <p className="error">{error}</p>}
-        <button type="submit">Entrar</button>
-      </form>
-      <p>Não tem conta? <Link to="/register">Cadastre-se</Link></p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <button
+        onClick={toggle}
+        className="glass fixed top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/5 transition-all cursor-pointer z-10"
+        aria-label={dark ? "Modo claro" : "Modo escuro"}
+      >
+        {dark ? <SunIcon /> : <MoonIcon />}
+      </button>
+
+      <div className="w-full max-w-md">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-violet-500 to-indigo-600 shadow-xl shadow-violet-500/30 mb-4">
+            <span className="text-white text-lg font-bold tracking-wider">EH</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
+            EventHub Acadêmico
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Bem-vindo de volta
+          </p>
+        </div>
+
+        {/* Card */}
+        <div className="glass-strong rounded-3xl p-8">
+          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-6">Entrar na conta</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+                E-mail
+              </label>
+              <input
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl px-4 py-3 text-sm bg-white/50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 placeholder-slate-400 dark:placeholder-slate-500 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400/30 dark:focus:ring-violet-400/20 focus:border-violet-400/50 dark:focus:border-violet-400/30 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+                Senha
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-xl px-4 py-3 text-sm bg-white/50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 placeholder-slate-400 dark:placeholder-slate-500 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400/30 dark:focus:ring-violet-400/20 focus:border-violet-400/50 dark:focus:border-violet-400/30 transition-all"
+              />
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-50/80 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl px-4 py-3 text-sm font-medium bg-linear-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-2"
+            >
+              {loading ? "Entrando…" : "Entrar"}
+            </button>
+          </form>
+
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-6">
+            Não tem conta?{" "}
+            <Link to="/register" className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium transition-colors">
+              Cadastre-se
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

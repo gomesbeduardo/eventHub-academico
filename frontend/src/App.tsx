@@ -1,7 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-
-// Pages (to be implemented)
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import EventsPage from "./pages/EventsPage";
@@ -16,26 +14,20 @@ export default function App() {
   const { user } = useAuth();
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/register" element={user ? <Navigate to="/" replace /> : <RegisterPage />} />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <EventsPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <DashboardPage />
-          </PrivateRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-56 -right-56 w-[600px] h-[600px] rounded-full bg-violet-300/20 dark:bg-violet-600/12 blur-[100px]" />
+        <div className="absolute -bottom-56 -left-56 w-[600px] h-[600px] rounded-full bg-indigo-300/20 dark:bg-indigo-600/12 blur-[100px]" />
+        <div className="absolute top-1/3 right-1/3 w-80 h-80 rounded-full bg-sky-200/15 dark:bg-sky-600/8 blur-[80px]" />
+      </div>
+
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/register" element={user ? <Navigate to="/" replace /> : <RegisterPage />} />
+        <Route path="/" element={<PrivateRoute><EventsPage /></PrivateRoute>} />
+        <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
