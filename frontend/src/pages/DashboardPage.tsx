@@ -11,7 +11,7 @@ import api from "../services/api";
 import { AnalyticsMetrics, TrendData, OccupancyData } from "../types";
 import Navbar from "../components/Navbar";
 
-const PIE_COLORS = ["#8b5cf6", "#f59e0b", "#10b981", "#6366f1"];
+const PIE_COLORS = ["#64748b", "#d97706", "#059669", "#78716c"];
 
 interface StatCardProps {
   label: string;

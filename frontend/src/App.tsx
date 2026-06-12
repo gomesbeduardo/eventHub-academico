@@ -16,9 +16,9 @@ export default function App() {
   return (
     <>
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-56 -right-56 w-[600px] h-[600px] rounded-full bg-violet-300/20 dark:bg-violet-600/12 blur-[100px]" />
-        <div className="absolute -bottom-56 -left-56 w-[600px] h-[600px] rounded-full bg-indigo-300/20 dark:bg-indigo-600/12 blur-[100px]" />
-        <div className="absolute top-1/3 right-1/3 w-80 h-80 rounded-full bg-sky-200/15 dark:bg-sky-600/8 blur-[80px]" />
+        <div className="absolute -top-56 -right-56 w-[600px] h-[600px] rounded-full bg-stone-300/18 dark:bg-stone-600/10 blur-[120px]" />
+        <div className="absolute -bottom-56 -left-56 w-[600px] h-[600px] rounded-full bg-zinc-300/18 dark:bg-zinc-600/10 blur-[120px]" />
+        <div className="absolute top-1/3 right-1/3 w-80 h-80 rounded-full bg-slate-200/15 dark:bg-slate-500/8 blur-[80px]" />
       </div>
 
       <Routes>

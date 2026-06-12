@@ -61,8 +61,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-violet-500 to-indigo-600 shadow-xl shadow-violet-500/30 mb-4">
-            <span className="text-white text-lg font-bold tracking-wider">EH</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-800 dark:bg-slate-200 shadow-xl shadow-slate-900/15 mb-4">
+            <span className="text-white dark:text-slate-900 text-lg font-bold tracking-wider">EH</span>
           </div>
           <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
             EventHub Acadêmico
@@ -87,7 +87,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-xl px-4 py-3 text-sm bg-white/50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 placeholder-slate-400 dark:placeholder-slate-500 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400/30 dark:focus:ring-violet-400/20 focus:border-violet-400/50 dark:focus:border-violet-400/30 transition-all"
+                className="w-full rounded-xl px-4 py-3 text-sm bg-white/50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 placeholder-slate-400 dark:placeholder-slate-500 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/50 dark:focus:ring-slate-500/30 focus:border-slate-400/50 dark:focus:border-slate-500/40 transition-all"
               />
             </div>
 
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full rounded-xl px-4 py-3 text-sm bg-white/50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 placeholder-slate-400 dark:placeholder-slate-500 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400/30 dark:focus:ring-violet-400/20 focus:border-violet-400/50 dark:focus:border-violet-400/30 transition-all"
+                className="w-full rounded-xl px-4 py-3 text-sm bg-white/50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 placeholder-slate-400 dark:placeholder-slate-500 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/50 dark:focus:ring-slate-500/30 focus:border-slate-400/50 dark:focus:border-slate-500/40 transition-all"
               />
             </div>
 
@@ -115,7 +115,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl px-4 py-3 text-sm font-medium bg-linear-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-2"
+              className="w-full rounded-xl px-4 py-3 text-sm font-medium bg-slate-800 hover:bg-zinc-900 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white shadow-md shadow-slate-900/10 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-2"
             >
               {loading ? "Entrando…" : "Entrar"}
             </button>
@@ -123,7 +123,7 @@ export default function LoginPage() {
 
           <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-6">
             Não tem conta?{" "}
-            <Link to="/register" className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium transition-colors">
+            <Link to="/register" className="text-slate-700 dark:text-slate-300 underline decoration-slate-300 dark:decoration-slate-600 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors">
               Cadastre-se
             </Link>
           </p>

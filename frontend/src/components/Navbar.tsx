@@ -52,8 +52,8 @@ export default function Navbar({ backTo, showDashboard }: NavbarProps) {
             </button>
           )}
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/25 shrink-0">
-              <span className="text-white text-[10px] font-bold tracking-wider">EH</span>
+            <div className="w-8 h-8 rounded-xl bg-slate-800 dark:bg-slate-200 flex items-center justify-center shadow-md shadow-slate-900/15 shrink-0">
+              <span className="text-white dark:text-slate-900 text-[10px] font-bold tracking-wider">EH</span>
             </div>
             <span className="font-semibold text-slate-700 dark:text-slate-200 tracking-tight">EventHub</span>
           </div>

@@ -3,8 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { Event, EventCategory, EventStatus } from "../types";
 import Navbar from "../components/Navbar";
-
-const CATEGORIES: EventCategory[] = ["PALESTRA", "WORKSHOP", "MINICURSO", "SEMINARIO"];
+import Select from "../components/Select";
 
 const CATEGORY_LABEL: Record<EventCategory, string> = {
   PALESTRA: "Palestra",
@@ -14,41 +13,54 @@ const CATEGORY_LABEL: Record<EventCategory, string> = {
 };
 
 const CATEGORY_COLOR: Record<EventCategory, string> = {
-  PALESTRA: "bg-blue-100/70 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-  WORKSHOP: "bg-amber-100/70 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  MINICURSO: "bg-emerald-100/70 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  SEMINARIO: "bg-violet-100/70 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  PALESTRA:  "bg-stone-100/80 text-stone-600 dark:bg-stone-500/15 dark:text-stone-300",
+  WORKSHOP:  "bg-amber-100/80 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  MINICURSO: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  SEMINARIO: "bg-zinc-100/80 text-zinc-600 dark:bg-zinc-500/15 dark:text-zinc-300",
 };
 
 const STATUS_COLOR: Record<EventStatus, string> = {
-  AVAILABLE: "bg-emerald-100/70 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  FULL: "bg-rose-100/70 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-  FINISHED: "bg-slate-100/70 text-slate-500 dark:bg-slate-500/15 dark:text-slate-400",
+  AVAILABLE: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  FULL:      "bg-rose-100/80 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  FINISHED:  "bg-slate-100/80 text-slate-500 dark:bg-slate-500/15 dark:text-slate-400",
 };
 
 const STATUS_LABEL: Record<EventStatus, string> = {
   AVAILABLE: "Disponível",
-  FULL: "Lotado",
-  FINISHED: "Encerrado",
+  FULL:      "Lotado",
+  FINISHED:  "Encerrado",
 };
 
-const selectClass =
-  "glass rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-400/30 transition-all cursor-pointer";
+const CATEGORY_OPTIONS = [
+  { value: "", label: "Todas as categorias" },
+  { value: "PALESTRA",  label: "Palestra"  },
+  { value: "WORKSHOP",  label: "Workshop"  },
+  { value: "MINICURSO", label: "Minicurso" },
+  { value: "SEMINARIO", label: "Seminário" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "",          label: "Todos os status" },
+  { value: "AVAILABLE", label: "Disponível"      },
+  { value: "FULL",      label: "Lotado"          },
+  { value: "FINISHED",  label: "Encerrado"       },
+];
 
 export default function EventsPage() {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
-  const [filters, setFilters] = useState<{ category?: string; status?: string }>({});
+  const [category, setCategory] = useState("");
+  const [status, setStatus]   = useState("");
 
   async function fetchEvents() {
     const params = new URLSearchParams();
-    if (filters.category) params.set("category", filters.category);
-    if (filters.status) params.set("status", filters.status);
+    if (category) params.set("category", category);
+    if (status)   params.set("status", status);
     const { data } = await api.get(`/events?${params}`);
     setEvents(data);
   }
 
-  useEffect(() => { fetchEvents(); }, [filters]);
+  useEffect(() => { fetchEvents(); }, [category, status]);
 
   async function handleRegister(eventId: string) {
     try {
@@ -83,25 +95,18 @@ export default function EventsPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-8">
-          <select
-            className={selectClass}
-            onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value || undefined }))}
-          >
-            <option value="">Todas as categorias</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
-            ))}
-          </select>
-
-          <select
-            className={selectClass}
-            onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value || undefined }))}
-          >
-            <option value="">Todos os status</option>
-            <option value="AVAILABLE">Disponível</option>
-            <option value="FULL">Lotado</option>
-            <option value="FINISHED">Encerrado</option>
-          </select>
+          <Select
+            options={CATEGORY_OPTIONS}
+            value={category}
+            onChange={setCategory}
+            className="w-52"
+          />
+          <Select
+            options={STATUS_OPTIONS}
+            value={status}
+            onChange={setStatus}
+            className="w-44"
+          />
         </div>
 
         {/* Grid */}
@@ -125,7 +130,7 @@ export default function EventsPage() {
                 : 0;
               const barColor =
                 pct >= 100 ? "bg-rose-400" :
-                pct >= 75 ? "bg-amber-400" : "bg-emerald-400";
+                pct >= 75  ? "bg-amber-400" : "bg-emerald-400";
 
               return (
                 <div key={event.id} className="glass rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/50 dark:hover:bg-white/5 transition-all">
@@ -172,10 +177,7 @@ export default function EventsPage() {
                       <span>{event.usedSlots} / {event.totalSlots}</span>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700/50 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${barColor}`}
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
 
@@ -184,7 +186,7 @@ export default function EventsPage() {
                     <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => handleRegister(event.id)}
-                        className="flex-1 rounded-xl px-3 py-2 text-sm font-medium bg-linear-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-sm shadow-violet-500/20 active:scale-[0.97] transition-all cursor-pointer"
+                        className="flex-1 rounded-xl px-3 py-2 text-sm font-medium bg-slate-800 hover:bg-zinc-900 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white shadow-sm shadow-slate-900/10 active:scale-[0.97] transition-all cursor-pointer"
                       >
                         Inscrever-se
                       </button>
