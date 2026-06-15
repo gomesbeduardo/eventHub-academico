@@ -1,0 +1,11 @@
+Este projeto usa AGENTS.md como fonte única de contexto e regras para IAs.
+
+Leia AGENTS.md por completo antes de modificar qualquer coisa. Ele define:
+- Arquitetura em Camadas + MVC (fluxo Controller -> Service -> Repository -> Prisma)
+- Regra de negócio vive SÓ na camada de Services
+- 3 Design Patterns que NÃO podem ser removidos: Observer, Factory Method, Strategy
+- Stack fixa: React, Express, Prisma, PostgreSQL, JWT, bcrypt, Pino
+- Não prometer no README o que não está implementado
+
+Consulte também TAREFAS.md para o trabalho pendente.
+Documentação/UI em português; código em inglês. Validar com `npx tsc --noEmit` nos dois projetos antes de finalizar.
