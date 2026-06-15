@@ -3,12 +3,20 @@ import { AuthService } from "../services/AuthService";
 
 const authService = new AuthService();
 
+// RF01 — formato de e-mail válido (parte local + @ + domínio com TLD)
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const AuthController = {
   async register(req: Request, res: Response) {
     try {
       const { name, email, password, role } = req.body;
       if (!name || !email || !password || !role) {
         res.status(400).json({ error: "Campos obrigatórios: name, email, password, role" });
+        return;
+      }
+      // RF01 — valida o FORMATO do e-mail antes de confirmar o cadastro
+      if (!EMAIL_REGEX.test(email)) {
+        res.status(400).json({ error: "Formato de e-mail inválido" });
         return;
       }
       if (password.length < 8) {
