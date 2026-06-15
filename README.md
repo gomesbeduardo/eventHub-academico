@@ -214,108 +214,147 @@ class RecommendationService {
 
 ## Requisitos Funcionais
 
-### RF01 — Cadastro de Usuários
-Perfil: **Participante / Organizador**
+> **Convenção:** cada requisito é declarado em frase única e verificável no formato
+> *"O sistema deve [função] [condição]"*. **Ator** indica quem aciona a função.
+> **Prioridade** segue a classificação Essencial / Importante / Desejável.
+> Os **critérios de aceitação** são condições objetivas e testáveis usadas para validar o requisito.
 
-- Campos obrigatórios: nome completo, e-mail, senha e tipo de perfil
-- E-mail deve ser único no sistema
-- Senha com no mínimo 8 caracteres
-- Tipo de perfil (Participante ou Organizador) selecionado obrigatoriamente
-- Validação do formato do e-mail antes de confirmar o cadastro
+### RF01 — Cadastro de Usuário
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve permitir que um visitante crie uma conta informando nome completo, e-mail, senha e tipo de perfil (Participante ou Organizador). |
+| **Ator** | Visitante |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. O e-mail deve ser único no sistema. 2. A senha deve ter no mínimo 8 caracteres. 3. O formato do e-mail deve ser validado antes da confirmação. 4. O tipo de perfil é de seleção obrigatória. |
 
 ### RF02 — Autenticação
-Perfil: **Participante / Organizador**
 
-- Login com e-mail e senha cadastrados
-- Mensagem de erro em credenciais inválidas, sem indicar qual campo está incorreto
-- Logout encerra a sessão e invalida o token de acesso
-- Recuperação de senha via link enviado ao e-mail do usuário
-- Sessão expira automaticamente após período de inatividade
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve autenticar o usuário a partir de e-mail e senha cadastrados, emitindo um token de acesso (JWT) válido. |
+| **Ator** | Participante, Organizador |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. Credenciais inválidas devem retornar mensagem genérica, sem indicar qual campo está incorreto. 2. O logout deve encerrar a sessão no cliente. 3. O token deve possuir prazo de expiração definido. |
 
 ### RF03 — Gerenciamento de Eventos
-Perfil: **Organizador**
 
-- Campos do evento: nome, descrição, categoria, data, horário, local e número de vagas
-- Categoria obrigatória escolhida de lista pré-definida: `Palestra`, `Workshop`, `Minicurso`, `Seminário`
-- Data do evento deve ser igual ou posterior à data atual
-- Somente o organizador criador pode editar ou excluir o evento
-- Ao excluir evento com inscrições ativas, o sistema exige confirmação explícita
-- Organizador pode visualizar a lista completa de inscritos em cada evento
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve permitir que o Organizador crie, edite e exclua eventos contendo nome, descrição, categoria, data, horário, local e número de vagas. |
+| **Ator** | Organizador |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. A categoria deve ser escolhida de lista pré-definida (`Palestra`, `Workshop`, `Minicurso`, `Seminário`). 2. A data do evento deve ser igual ou posterior à data atual. 3. Somente o Organizador criador pode editar ou excluir o evento. 4. A exclusão de evento com inscrições ativas deve exigir confirmação explícita. 5. O Organizador deve poder visualizar a lista de inscritos de cada evento. |
 
 ### RF04 — Inscrição em Eventos
-Perfil: **Participante**
 
-- Apenas usuários Participante autenticados podem realizar inscrições
-- Um participante não pode se inscrever no mesmo evento mais de uma vez
-- O sistema verifica disponibilidade de vagas antes de confirmar
-- Inscrição em evento Lotado é bloqueada no backend
-- O participante recebe confirmação visual da inscrição realizada
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve permitir que o Participante autenticado se inscreva em um evento com vagas disponíveis. |
+| **Ator** | Participante |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. Um Participante não pode se inscrever mais de uma vez no mesmo evento. 2. A disponibilidade de vagas deve ser verificada antes de confirmar. 3. A inscrição em evento lotado deve ser bloqueada no backend. 4. O sistema deve exibir confirmação visual da inscrição. |
 
 ### RF05 — Cancelamento de Inscrição
-Perfil: **Participante**
 
-- Participante cancela somente suas próprias inscrições
-- A vaga é liberada automaticamente no evento após o cancelamento
-- Cancelamentos em eventos com data passada não são permitidos
-- O sistema solicita confirmação antes de efetivar o cancelamento
-- O histórico registra o cancelamento com data e hora
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve permitir que o Participante cancele uma inscrição própria, liberando a vaga correspondente. |
+| **Ator** | Participante |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. O Participante só pode cancelar inscrições próprias. 2. A vaga deve ser liberada automaticamente após o cancelamento. 3. Cancelamentos em eventos com data passada devem ser bloqueados. 4. O sistema deve solicitar confirmação antes de efetivar. |
 
 ### RF06 — Consulta e Listagem de Eventos
-Perfil: **Participante / Organizador**
 
-- Todos os usuários autenticados podem visualizar a listagem
-- Cada item exibe: nome, categoria, data, horário, local, vagas disponíveis e status
-- Status do evento: `Disponível` ou `Lotado`
-- Filtros disponíveis: por data, por status e por categoria
-- Organizadores visualizam exclusivamente seus próprios eventos na área de gerenciamento
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve permitir que usuários autenticados consultem a listagem de eventos, com filtros por data, status e categoria. |
+| **Ator** | Participante, Organizador |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. Cada item deve exibir nome, categoria, data, horário, local, vagas disponíveis e status. 2. O status deve ser `Disponível` ou `Lotado`. 3. Os filtros por data, status e categoria devem estar disponíveis. 4. Na área de gerenciamento, o Organizador deve visualizar apenas os próprios eventos. |
 
-### RF07 — Controle de Vagas
-Perfil: **Sistema (automático)**
+### RF07 — Controle Automático de Vagas
 
-- Contador de vagas decrementado a cada inscrição confirmada
-- Contador de vagas incrementado a cada cancelamento
-- Quando vagas chegam a zero, status muda automaticamente para Lotado
-- Com status Lotado, novas inscrições são bloqueadas no backend
-- A atualização reflete-se na interface sem necessidade de recarregar a página
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve atualizar automaticamente o número de vagas e o status do evento a cada inscrição ou cancelamento. |
+| **Ator** | Sistema (automático) |
+| **Prioridade** | Essencial |
+| **Critérios de aceitação** | 1. O contador deve ser decrementado a cada inscrição confirmada e incrementado a cada cancelamento. 2. Ao atingir zero vagas, o status deve mudar para `Lotado`. 3. Com status `Lotado`, novas inscrições devem ser bloqueadas no backend. 4. A atualização deve refletir na interface sem recarregar a página. |
 
 ### RF08 — Histórico
-Perfil: **Participante / Organizador**
 
-- Participantes visualizam todos os eventos em que se inscreveram
-- Organizadores visualizam todos os eventos que criaram
-- Histórico exibe status de cada inscrição: `Confirmada` ou `Cancelada`
-- Ordenado por data do evento, do mais recente ao mais antigo
-- Eventos já realizados são identificados visualmente como `Encerrado`
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve disponibilizar ao usuário o histórico de suas atividades: inscrições do Participante e eventos criados pelo Organizador. |
+| **Ator** | Participante, Organizador |
+| **Prioridade** | Importante |
+| **Critérios de aceitação** | 1. O Participante deve visualizar todos os eventos em que se inscreveu. 2. O Organizador deve visualizar todos os eventos que criou. 3. O status de cada inscrição deve ser `Confirmada` ou `Cancelada`. 4. A lista deve ser ordenada por data do evento, do mais recente ao mais antigo. 5. Eventos já realizados devem ser identificados como `Encerrado`. |
 
-### RF09 — Dashboard de Análise para Organizadores *(Módulo BI)*
-Perfil: **Organizador**
+### RF09 — Dashboard de Análise *(Módulo BI)*
 
-- Taxa de ocupação de cada evento exibida em gráfico de barras
-- Distribuição de eventos por categoria exibida em gráfico de pizza
-- Evolução de inscrições ao longo do tempo exibida em gráfico de linha
-- Ranking dos eventos com maior taxa de ocupação (tabela ordenada)
-- Métricas visíveis apenas para os eventos do próprio organizador autenticado
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve apresentar ao Organizador um painel com métricas dos seus eventos: taxa de ocupação, distribuição por categoria, evolução de inscrições e ranking de popularidade. |
+| **Ator** | Organizador |
+| **Prioridade** | Importante |
+| **Critérios de aceitação** | 1. A taxa de ocupação deve ser exibida em gráfico de barras. 2. A distribuição por categoria deve ser exibida em gráfico de pizza. 3. A evolução de inscrições deve ser exibida em gráfico de linha. 4. O ranking de ocupação deve ser exibido em tabela ordenada. 5. As métricas devem se restringir aos eventos do Organizador autenticado. |
 
-### RF10 — Recomendação de Eventos para Participantes *(Módulo BI)*
-Perfil: **Participante**
+### RF10 — Recomendação de Eventos *(Módulo BI)*
 
-- Sistema identifica as categorias mais frequentes no histórico do participante
-- Recomendações exibem apenas eventos com vagas disponíveis e datas futuras
-- Eventos em que o participante já está inscrito não são recomendados
-- Mínimo de 3 recomendações exibidas quando disponíveis
-- Fallback para eventos mais populares quando histórico for insuficiente (menos de 2 inscrições)
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve recomendar ao Participante eventos relevantes com base no seu histórico de inscrições. |
+| **Ator** | Participante |
+| **Prioridade** | Importante |
+| **Critérios de aceitação** | 1. As recomendações devem considerar as categorias mais frequentes no histórico do Participante. 2. Devem ser exibidos apenas eventos com vagas disponíveis e data futura. 3. Eventos em que o Participante já está inscrito não devem ser recomendados. 4. Devem ser exibidas no mínimo 3 recomendações quando disponíveis. 5. Quando o histórico for insuficiente (menos de 2 inscrições), o sistema deve recorrer aos eventos mais populares (fallback). |
 
 ---
 
 ## Requisitos Não Funcionais
 
-| ID | Nome | Descrição | Como Medir |
-|----|------|-----------|-----------|
-| RNF01 | Desempenho | Operações principais (listagem, inscrição, login, queries de BI) respondidas em no máximo 2 segundos em condições normais | Tempo de resposta < 2s para 95% das requisições HTTP |
-| RNF02 | Segurança | Senhas armazenadas com hash bcrypt, fator de custo ≥ 10. Rotas privadas exigem token JWT válido. Nenhuma senha em texto puro | Hash bcrypt (custo ≥ 10) no cadastro; rotas privadas retornam 401 sem token |
-| RNF03 | Responsividade | Interface funcional e legível em smartphones (≥ 375px) e desktops (≥ 1280px), incluindo os gráficos do dashboard de BI | Interface renderiza corretamente em viewport de 375px e 1280px |
-| RNF04 | Disponibilidade | Sistema sem falhas críticas durante toda a demonstração. Aplicação compila e executa no ambiente de apresentação | Aplicação executa sem erros fatais durante a apresentação de 20 minutos |
-| RNF05 | Manutenibilidade | Código organizado na arquitetura em camadas. Sem regras de negócio em rotas ou controllers. Serviços de BI isolados em sua própria camada | Pastas: `/controllers`, `/services`, `/repositories`, `/models` |
+> Classificados por característica de qualidade conforme a norma **ISO/IEC 25010**.
+> Cada requisito declara uma **métrica** e um **critério de aceitação** objetivo e verificável.
+
+### RNF01 — Desempenho (Eficiência)
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve responder às operações principais (login, listagem, inscrição e consultas de BI) em condições normais de uso de forma ágil. |
+| **Métrica** | Tempo de resposta das requisições HTTP. |
+| **Critério de aceitação** | 95% das requisições devem ser respondidas em até 2 segundos. |
+
+### RNF02 — Segurança
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve proteger as credenciais dos usuários e restringir o acesso a recursos protegidos. |
+| **Métrica** | Algoritmo e fator de hash das senhas; resposta das rotas privadas sem autenticação. |
+| **Critério de aceitação** | 1. Senhas armazenadas com hash bcrypt de fator ≥ 10, nunca em texto puro. 2. Rotas privadas devem retornar HTTP 401 quando o token JWT estiver ausente ou inválido. |
+
+### RNF03 — Usabilidade (Responsividade)
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve apresentar interface legível e funcional em dispositivos móveis e desktops, incluindo os gráficos do dashboard. |
+| **Métrica** | Renderização da interface em diferentes larguras de viewport. |
+| **Critério de aceitação** | A interface deve renderizar corretamente em viewports de 375px (smartphone) e 1280px (desktop). |
+
+### RNF04 — Confiabilidade (Disponibilidade)
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve operar sem falhas críticas durante a execução e a demonstração. |
+| **Métrica** | Ocorrência de erros fatais durante a operação. |
+| **Critério de aceitação** | A aplicação deve compilar e executar sem erros fatais durante a apresentação de 20 minutos. |
+
+### RNF05 — Manutenibilidade
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Descrição** | O sistema deve seguir a arquitetura em camadas, sem regras de negócio em rotas ou controllers, com os serviços de BI isolados em sua própria camada. |
+| **Métrica** | Organização do código-fonte em camadas. |
+| **Critério de aceitação** | O projeto deve manter as pastas `/controllers`, `/services`, `/repositories` e `/models`, com a lógica de negócio restrita à camada de serviços. |
 
 ---
 
