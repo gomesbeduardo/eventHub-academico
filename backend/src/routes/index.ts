@@ -10,6 +10,8 @@ const router = Router();
 // Auth
 router.post("/auth/register", AuthController.register);
 router.post("/auth/login", AuthController.login);
+router.post("/auth/forgot-password", AuthController.forgotPassword);
+router.post("/auth/reset-password", AuthController.resetPassword);
 
 // Events — public listing
 router.get("/events", authenticate, EventController.list);
