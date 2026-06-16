@@ -3,6 +3,18 @@ import { EventRepository } from "../repositories/EventRepository";
 import { RegistrationRepository } from "../repositories/RegistrationRepository";
 import { EventObserver, VacancyObserver, StatusObserver } from "../models/Observer";
 
+// RF03 — categorias válidas vêm direto do enum do Prisma
+// (PALESTRA, WORKSHOP, MINICURSO, SEMINARIO). Sem lista hard-coded duplicada.
+const VALID_CATEGORIES = Object.values(EventCategory) as EventCategory[];
+
+function assertValidCategory(category: unknown): asserts category is EventCategory {
+  if (!VALID_CATEGORIES.includes(category as EventCategory)) {
+    throw new Error(
+      `Categoria inválida. Use uma de: ${VALID_CATEGORIES.join(", ")}`
+    );
+  }
+}
+
 // Observer Pattern (DP01) — EventService notifies observers on slot changes
 export class EventService {
   private eventRepo = new EventRepository();
@@ -29,6 +41,9 @@ export class EventService {
     totalSlots: number;
     organizerId: string;
   }) {
+    // RF03 — categoria obrigatória e dentro da lista pré-definida
+    assertValidCategory(data.category);
+
     if (new Date(data.date) < new Date()) {
       throw new Error("A data do evento deve ser igual ou posterior à data atual");
     }
@@ -50,11 +65,29 @@ export class EventService {
   async updateEvent(
     eventId: string,
     organizerId: string,
-    data: Partial<{ name: string; description: string; date: Date; location: string; totalSlots: number }>
+    // RF03 — agora a categoria também pode ser editada (CRUD com categoria)
+    data: Partial<{
+      name: string;
+      description: string;
+      category: EventCategory;
+      date: Date;
+      location: string;
+      totalSlots: number;
+    }>
   ) {
     const event = await this.eventRepo.findById(eventId);
     if (!event) throw new Error("Evento não encontrado");
     if (event.organizerId !== organizerId) throw new Error("Sem permissão");
+
+    // RF03 — se vier categoria nova, valida antes de persistir
+    if (data.category !== undefined) {
+      assertValidCategory(data.category);
+    }
+
+    // RF03 — se a data for editada, ela também não pode ser no passado
+    if (data.date !== undefined && new Date(data.date) < new Date()) {
+      throw new Error("A data do evento deve ser igual ou posterior à data atual");
+    }
 
     return this.eventRepo.update(eventId, data);
   }
@@ -63,6 +96,13 @@ export class EventService {
     const event = await this.eventRepo.findById(eventId);
     if (!event) throw new Error("Evento não encontrado");
     if (event.organizerId !== organizerId) throw new Error("Sem permissão");
+
+    const activeRegs = await this.registrationRepo.countConfirmedByEvent(eventId);
+    if (activeRegs > 0) {
+      throw new Error(
+        `Este evento possui ${activeRegs} inscrição(ões) ativa(s). Cancele as inscrições antes de excluir.`
+      );
+    }
 
     await this.eventRepo.delete(eventId);
   }

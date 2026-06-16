@@ -1,9 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
-import { Event, EventCategory, EventStatus } from "../types";
-import Navbar from "../components/Navbar";
-import Select from "../components/Select";
+import { useTheme } from "../context/ThemeContext";
+import { useNavigate } from "react-router-dom";
+import api, { getRecommendations } from "../services/api";
+import { Event, EventCategory, EventStatus, Registration } from "../types";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+type Tab = "events" | "recommended" | "history" | "my-events";
+
+interface EventForm {
+  name: string;
+  description: string;
+  category: EventCategory;
+  date: string;
+  location: string;
+  totalSlots: string;
+}
+
+interface Registrant {
+  id: string;
+  user: { id: string; name: string; email: string };
+}
+
+const EMPTY_FORM: EventForm = {
+  name: "", description: "", category: "PALESTRA",
+  date: "", location: "", totalSlots: "",
+};
 
 const CATEGORY_LABEL: Record<EventCategory, string> = {
   PALESTRA: "Palestra",
@@ -46,164 +68,472 @@ const STATUS_OPTIONS = [
   { value: "FINISHED",  label: "Encerrado"       },
 ];
 
-export default function EventsPage() {
-  const { user } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [category, setCategory] = useState("");
-  const [status, setStatus]   = useState("");
+// ── Helpers ────────────────────────────────────────────────────────────────
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
+function formatDateTimeLocal(d: string) {
+  return new Date(d).toISOString().slice(0, 16);
+}
+function occupancyPct(e: Event) {
+  return e.totalSlots > 0 ? Math.round((e.usedSlots / e.totalSlots) * 100) : 0;
+}
 
-  async function fetchEvents() {
+// ── Slots Bar ──────────────────────────────────────────────────────────────
+function SlotsBar({ event }: { event: Event }) {
+  const pct = occupancyPct(event);
+  return (
+    <div className="slots-bar-wrap">
+      <div className="slots-bar-label">
+        <span>{event.totalSlots - event.usedSlots} vagas livres</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="slots-bar">
+        <div className={`slots-bar-fill ${event.status === "FULL" ? "full" : ""}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: EventStatus }) {
+  const map: Record<EventStatus, { cls: string; label: string }> = {
+    AVAILABLE: { cls: "badge-available", label: "Disponível" },
+    FULL:      { cls: "badge-full",      label: "Lotado"    },
+    FINISHED:  { cls: "badge-finished",  label: "Encerrado" },
+  };
+  const { cls, label } = map[status];
+  return <span className={`badge ${cls}`}>{label}</span>;
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────
+export default function EventsPage() {
+  const { user, logout }     = useAuth();
+  const { dark, toggleTheme } = useTheme();
+  const navigate              = useNavigate();
+  const isOrganizer           = user?.role === "ORGANIZER";
+
+  const [tab, setTab] = useState<Tab>(isOrganizer ? "my-events" : "events");
+
+  const [events,          setEvents]          = useState<Event[]>([]);
+  const [myEvents,        setMyEvents]        = useState<Event[]>([]);
+  const [recommendations, setRecommendations] = useState<Event[]>([]);
+  const [history,         setHistory]         = useState<Registration[]>([]);
+  const [registrants,     setRegistrants]     = useState<Registrant[]>([]);
+
+  const [filterCat,    setFilterCat]    = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const [showCreate,      setShowCreate]      = useState(false);
+  const [showEdit,        setShowEdit]        = useState(false);
+  const [showRegistrants, setShowRegistrants] = useState(false);
+  const [editingEvent,    setEditingEvent]    = useState<Event | null>(null);
+  const [viewingEvent,    setViewingEvent]    = useState<Event | null>(null);
+
+  const [form,      setForm]      = useState<EventForm>(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
+  const [formBusy,  setFormBusy]  = useState(false);
+
+  // ── Fetch ────────────────────────────────────────────────────────────────
+  const fetchEvents = useCallback(async () => {
     const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (status)   params.set("status", status);
+    if (filterCat)    params.set("category", filterCat);
+    if (filterStatus) params.set("status",   filterStatus);
     const { data } = await api.get(`/events?${params}`);
     setEvents(data);
-  }
+  }, [filterCat, filterStatus]);
 
-  useEffect(() => { fetchEvents(); }, [category, status]);
+  const fetchMyEvents = useCallback(async () => {
+    if (!isOrganizer) return;
+    const { data } = await api.get("/events/mine");
+    setMyEvents(data);
+  }, [isOrganizer]);
 
+  const fetchHistory = useCallback(async () => {
+    if (isOrganizer) return;
+    const { data } = await api.get("/registrations/history");
+    setHistory(data);
+  }, [isOrganizer]);
+
+  const fetchRecommendations = useCallback(async () => {
+    if (!user || isOrganizer) return;
+    try { const { data } = await getRecommendations(user.id); setRecommendations(data); }
+    catch { setRecommendations([]); }
+  }, [user, isOrganizer]);
+
+  useEffect(() => { fetchEvents(); },          [fetchEvents]);
+  useEffect(() => { fetchMyEvents(); },        [fetchMyEvents]);
+  useEffect(() => { fetchHistory(); },         [fetchHistory]);
+  useEffect(() => { fetchRecommendations(); }, [fetchRecommendations]);
+
+  // ── Participant actions ──────────────────────────────────────────────────
   async function handleRegister(eventId: string) {
     try {
       await api.post(`/events/${eventId}/register`);
-      fetchEvents();
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
-      alert(msg ?? "Erro ao inscrever");
-    }
+      fetchEvents(); fetchRecommendations();
+    } catch (err: any) { alert(err.response?.data?.error ?? "Erro ao inscrever"); }
   }
 
   async function handleCancel(eventId: string) {
-    if (!confirm("Confirma cancelamento da inscrição?")) return;
-    await api.delete(`/events/${eventId}/register`);
-    fetchEvents();
+    if (!confirm("Confirma o cancelamento da inscrição?")) return;
+    try {
+      await api.delete(`/events/${eventId}/register`);
+      fetchEvents(); fetchHistory(); fetchRecommendations();
+    } catch (err: any) { alert(err.response?.data?.error ?? "Erro ao cancelar"); }
   }
 
+  // ── Form helpers ─────────────────────────────────────────────────────────
+  function formChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  }
+
+  function openCreate() { setForm(EMPTY_FORM); setFormError(""); setShowCreate(true); }
+
+  function openEdit(event: Event) {
+    setEditingEvent(event);
+    setForm({
+      name: event.name, description: event.description, category: event.category,
+      date: formatDateTimeLocal(event.date), location: event.location, totalSlots: String(event.totalSlots),
+    });
+    setFormError(""); setShowEdit(true);
+  }
+
+  async function openRegistrants(event: Event) {
+    setViewingEvent(event);
+    try { const { data } = await api.get(`/events/${event.id}/registrations`); setRegistrants(data); }
+    catch { setRegistrants([]); }
+    setShowRegistrants(true);
+  }
+
+  // ── CRUD ─────────────────────────────────────────────────────────────────
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault(); setFormError(""); setFormBusy(true);
+    try {
+      await api.post("/events", { ...form, totalSlots: Number(form.totalSlots), date: new Date(form.date).toISOString() });
+      setShowCreate(false); fetchMyEvents(); fetchEvents();
+    } catch (err: any) { setFormError(err.response?.data?.error ?? "Erro ao criar evento"); }
+    finally { setFormBusy(false); }
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault(); if (!editingEvent) return; setFormError(""); setFormBusy(true);
+    try {
+      await api.put(`/events/${editingEvent.id}`, { ...form, totalSlots: Number(form.totalSlots), date: new Date(form.date).toISOString() });
+      setShowEdit(false); fetchMyEvents(); fetchEvents();
+    } catch (err: any) { setFormError(err.response?.data?.error ?? "Erro ao editar evento"); }
+    finally { setFormBusy(false); }
+  }
+
+  async function handleDelete(event: Event) {
+    if (!confirm(`Excluir "${event.name}"? Esta ação não pode ser desfeita.`)) return;
+    try { await api.delete(`/events/${event.id}`); fetchMyEvents(); fetchEvents(); }
+    catch (err: any) { alert(err.response?.data?.error ?? "Erro ao excluir evento"); }
+  }
+
+  // ── Event Card ───────────────────────────────────────────────────────────
+  function EventCard({ event, variant = "default" }: { event: Event; variant?: "default" | "recommended" | "mine" }) {
+    const isPast = new Date(event.date) < new Date();
+    return (
+      <div className={`event-card ${variant === "recommended" ? "recommended" : ""}`}>
+        <div className="event-card-header">
+          <h3>{event.name}</h3>
+          <StatusBadge status={isPast && event.status === "AVAILABLE" ? "FINISHED" : event.status} />
+        </div>
+        <span className="badge badge-category">{event.category}</span>
+        <div className="event-meta">
+          <div className="event-meta-item"><span>📅</span><strong>{formatDate(event.date)}</strong></div>
+          <div className="event-meta-item"><span>📍</span><span>{event.location}</span></div>
+        </div>
+        <SlotsBar event={event} />
+        <div className="event-card-actions">
+          {variant === "mine" ? (
+            <>
+              <button className="btn btn-ghost btn-sm" onClick={() => openRegistrants(event)}>👥 Inscritos ({event.usedSlots})</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => openEdit(event)}>✏️ Editar</button>
+              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(event)}>🗑️ Excluir</button>
+            </>
+          ) : !isOrganizer && !isPast && event.status === "AVAILABLE" ? (
+            <>
+              <button className="btn btn-primary btn-sm" onClick={() => handleRegister(event.id)}>Inscrever-se</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => handleCancel(event.id)}>Cancelar inscrição</button>
+            </>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Tabs config ──────────────────────────────────────────────────────────
+  const tabs: { key: Tab; label: string }[] = isOrganizer
+    ? [{ key: "my-events", label: "Meus Eventos" }, { key: "events", label: "Explorar" }]
+    : [{ key: "events", label: "Eventos" }, { key: "recommended", label: "Recomendados" }, { key: "history", label: "Histórico" }];
+
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen">
-      <Navbar showDashboard={user?.role === "ORGANIZER"} />
+    <>
+      {/* Navbar */}
+      <nav className="navbar">
+        <div className="navbar-brand">🎓 <span>EventHub</span> Acadêmico</div>
+        <div className="navbar-right">
+          <span className="navbar-user">Olá, {user?.name}</span>
+          <span className={`role-badge ${isOrganizer ? "organizer" : "participant"}`}>
+            {isOrganizer ? "Organizador" : "Participante"}
+          </span>
+          {isOrganizer && (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate("/dashboard")}>📊 Dashboard BI</button>
+          )}
+          <button className="btn btn-ghost btn-sm" onClick={toggleTheme} title="Alternar tema">
+            {dark ? "☀️ Claro" : "🌙 Escuro"}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={logout}>Sair</button>
+        </div>
+      </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
-            Eventos
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {events.length} evento{events.length !== 1 ? "s" : ""} encontrado{events.length !== 1 ? "s" : ""}
-          </p>
+      <main className="page">
+        {/* Tabs */}
+        <div className="tabs">
+          {tabs.map((t) => (
+            <button key={t.key} className={`tab-btn ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>
+              {t.label}
+              {t.key === "recommended" && recommendations.length > 0 && (
+                <span style={{ marginLeft: ".4rem", background: "var(--primary)", color: "#fff", borderRadius: "999px", padding: "0 .45rem", fontSize: ".7rem" }}>
+                  {recommendations.length}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Select
-            options={CATEGORY_OPTIONS}
-            value={category}
-            onChange={setCategory}
-            className="w-52"
-          />
-          <Select
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={setStatus}
-            className="w-44"
-          />
-        </div>
-
-        {/* Grid */}
-        {events.length === 0 ? (
-          <div className="glass-strong rounded-3xl p-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-700/50 flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-400">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+        {/* ── Meus Eventos ── */}
+        {tab === "my-events" && (
+          <>
+            <div className="section-header">
+              <h2>Meus Eventos</h2>
+              <button className="btn btn-primary" onClick={openCreate}>+ Criar Evento</button>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhum evento encontrado</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => {
-              const pct = event.totalSlots > 0
-                ? Math.min(100, (event.usedSlots / event.totalSlots) * 100)
-                : 0;
-              const barColor =
-                pct >= 100 ? "bg-rose-400" :
-                pct >= 75  ? "bg-amber-400" : "bg-emerald-400";
+            {myEvents.length === 0 ? (
+              <div className="empty-state">
+                <div style={{ fontSize: "2.5rem" }}>📅</div>
+                <p>Você ainda não criou nenhum evento.</p>
+                <button className="btn btn-primary" style={{ marginTop: "1rem" }} onClick={openCreate}>Criar primeiro evento</button>
+              </div>
+            ) : (
+              <div className="cards-grid">{myEvents.map((e) => <EventCard key={e.id} event={e} variant="mine" />)}</div>
+            )}
+          </>
+        )}
 
-              return (
-                <div key={event.id} className="glass rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/50 dark:hover:bg-white/5 transition-all">
-                  {/* Top row: category + status */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${CATEGORY_COLOR[event.category]}`}>
-                      {CATEGORY_LABEL[event.category]}
-                    </span>
-                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${STATUS_COLOR[event.status]}`}>
-                      {STATUS_LABEL[event.status]}
-                    </span>
-                  </div>
+        {/* ── Explorar / Eventos ── */}
+        {tab === "events" && (
+          <>
+            <div className="section-header">
+              <h2>{isOrganizer ? "Explorar Eventos" : "Todos os Eventos"}</h2>
+            </div>
+            <div className="filters-bar">
+              <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}>
+                <option value="">Todas as categorias</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                <option value="">Todos os status</option>
+                <option value="AVAILABLE">Disponível</option>
+                <option value="FULL">Lotado</option>
+              </select>
+            </div>
+            {events.length === 0 ? (
+              <div className="empty-state"><div style={{ fontSize: "2.5rem" }}>🔍</div><p>Nenhum evento encontrado.</p></div>
+            ) : (
+              <div className="cards-grid">{events.map((e) => <EventCard key={e.id} event={e} />)}</div>
+            )}
+          </>
+        )}
 
-                  {/* Title + description */}
-                  <div>
-                    <h3 className="font-semibold text-slate-800 dark:text-slate-100 leading-snug">
-                      {event.name}
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                      {event.description}
-                    </p>
-                  </div>
+        {/* ── Recomendados ── */}
+        {tab === "recommended" && !isOrganizer && (
+          <>
+            <div className="section-header"><h2>Recomendados pra você</h2></div>
+            {recommendations.length === 0 ? (
+              <div className="empty-state">
+                <div style={{ fontSize: "2.5rem" }}>✨</div>
+                <p>Ainda não temos recomendações para você.</p>
+                <p style={{ fontSize: ".875rem", marginTop: ".5rem" }}>Inscreva-se em pelo menos 2 eventos para receber sugestões personalizadas.</p>
+              </div>
+            ) : (
+              <div className="cards-grid">{recommendations.map((e) => <EventCard key={e.id} event={e} variant="recommended" />)}</div>
+            )}
+          </>
+        )}
 
-                  {/* Meta */}
-                  <div className="space-y-1.5 text-sm text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                        <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      {new Date(event.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-                      </svg>
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                  </div>
-
-                  {/* Slots progress */}
-                  <div>
-                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1.5">
-                      <span>Vagas</span>
-                      <span>{event.usedSlots} / {event.totalSlots}</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700/50 overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Actions — participant only */}
-                  {user?.role === "PARTICIPANT" && event.status === "AVAILABLE" && (
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => handleRegister(event.id)}
-                        className="flex-1 rounded-xl px-3 py-2 text-sm font-medium bg-slate-800 hover:bg-zinc-900 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white shadow-sm shadow-slate-900/10 active:scale-[0.97] transition-all cursor-pointer"
-                      >
-                        Inscrever-se
-                      </button>
-                      <button
-                        onClick={() => handleCancel(event.id)}
-                        className="glass rounded-xl px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-rose-50/70 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        {/* ── Histórico ── */}
+        {tab === "history" && !isOrganizer && (
+          <>
+            <div className="section-header"><h2>Histórico de Inscrições</h2></div>
+            {history.length === 0 ? (
+              <div className="empty-state"><div style={{ fontSize: "2.5rem" }}>📋</div><p>Você ainda não se inscreveu em nenhum evento.</p></div>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Evento</th><th>Categoria</th><th>Data</th><th>Local</th><th>Situação</th></tr>
+                  </thead>
+                  <tbody>
+                    {history.map((reg) => {
+                      const isPast = new Date(reg.event.date) < new Date();
+                      return (
+                        <tr key={reg.id}>
+                          <td><strong>{reg.event.name}</strong></td>
+                          <td><span className="badge badge-category">{reg.event.category}</span></td>
+                          <td>{formatDate(reg.event.date)}</td>
+                          <td>{reg.event.location}</td>
+                          <td>
+                            {isPast && reg.status === "CONFIRMED"
+                              ? <span className="badge badge-finished">Encerrado</span>
+                              : <span className={`badge ${reg.status === "CONFIRMED" ? "badge-confirmed" : "badge-cancelled"}`}>
+                                  {reg.status === "CONFIRMED" ? "Confirmada" : "Cancelada"}
+                                </span>
+                            }
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </main>
-    </div>
+
+      {/* ── Modal: Criar Evento ── */}
+      {showCreate && (
+        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Criar Evento</h2>
+              <button className="modal-close" onClick={() => setShowCreate(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreate}>
+              <div className="modal-body">
+                {formError && <div className="alert alert-error">{formError}</div>}
+                <div className="form-group">
+                  <label>Nome do evento</label>
+                  <input name="name" value={form.name} onChange={formChange} placeholder="Ex: Workshop de React" required />
+                </div>
+                <div className="form-group">
+                  <label>Descrição</label>
+                  <textarea name="description" value={form.description} onChange={formChange} placeholder="Descreva o evento..." required />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Categoria</label>
+                    <select name="category" value={form.category} onChange={formChange} required>
+                      {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Vagas</label>
+                    <input name="totalSlots" type="number" min="1" value={form.totalSlots} onChange={formChange} placeholder="50" required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Data e horário</label>
+                    <input name="date" type="datetime-local" value={form.date} onChange={formChange} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Local</label>
+                    <input name="location" value={form.location} onChange={formChange} placeholder="Sala 201 — Bloco B" required />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowCreate(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={formBusy}>{formBusy ? "Salvando..." : "Criar evento"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Editar Evento ── */}
+      {showEdit && (
+        <div className="modal-overlay" onClick={() => setShowEdit(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Evento</h2>
+              <button className="modal-close" onClick={() => setShowEdit(false)}>✕</button>
+            </div>
+            <form onSubmit={handleUpdate}>
+              <div className="modal-body">
+                {formError && <div className="alert alert-error">{formError}</div>}
+                <div className="form-group">
+                  <label>Nome do evento</label>
+                  <input name="name" value={form.name} onChange={formChange} placeholder="Ex: Workshop de React" required />
+                </div>
+                <div className="form-group">
+                  <label>Descrição</label>
+                  <textarea name="description" value={form.description} onChange={formChange} placeholder="Descreva o evento..." required />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Categoria</label>
+                    <select name="category" value={form.category} onChange={formChange} required>
+                      {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Vagas</label>
+                    <input name="totalSlots" type="number" min="1" value={form.totalSlots} onChange={formChange} placeholder="50" required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Data e horário</label>
+                    <input name="date" type="datetime-local" value={form.date} onChange={formChange} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Local</label>
+                    <input name="location" value={form.location} onChange={formChange} placeholder="Sala 201 — Bloco B" required />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowEdit(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={formBusy}>{formBusy ? "Salvando..." : "Salvar alterações"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Inscritos ── */}
+      {showRegistrants && (
+        <div className="modal-overlay" onClick={() => setShowRegistrants(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Inscritos — {viewingEvent?.name}</h2>
+              <button className="modal-close" onClick={() => setShowRegistrants(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {registrants.length === 0 ? (
+                <p style={{ textAlign: "center", padding: "1rem 0" }}>Nenhum inscrito ainda.</p>
+              ) : registrants.map((r) => (
+                <div key={r.id} className="registrant-item">
+                  <div className="registrant-avatar">{r.user.name.charAt(0).toUpperCase()}</div>
+                  <div className="registrant-info">
+                    <div className="registrant-name">{r.user.name}</div>
+                    <div className="registrant-email">{r.user.email}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <span className="helper-text">{registrants.length} inscrito(s)</span>
+              <button className="btn btn-ghost" onClick={() => setShowRegistrants(false)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

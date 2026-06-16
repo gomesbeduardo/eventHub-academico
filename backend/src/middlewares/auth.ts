@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
+import { ParamsFlatDictionary } from "express-serve-static-core";
 import jwt from "jsonwebtoken";
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends Request<ParamsFlatDictionary> {
   user?: { id: string; role: string };
 }
 

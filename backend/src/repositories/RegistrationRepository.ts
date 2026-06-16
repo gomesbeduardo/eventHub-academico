@@ -36,4 +36,10 @@ export class RegistrationRepository {
       where: { userId, status: "CONFIRMED" },
     });
   }
+
+  async countConfirmedByEvent(eventId: string): Promise<number> {
+    return prisma.registration.count({
+      where: { eventId, status: "CONFIRMED" },
+    });
+  }
 }

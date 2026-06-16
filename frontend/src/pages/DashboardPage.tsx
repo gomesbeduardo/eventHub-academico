@@ -3,28 +3,23 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend,
-  LineChart, Line, CartesianGrid,
+  LineChart, Line,
 } from "recharts";
 import api from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 import { AnalyticsMetrics, TrendData, OccupancyData } from "../types";
 import Navbar from "../components/Navbar";
 
-const PIE_COLORS = ["#64748b", "#d97706", "#059669", "#78716c"];
+const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  sub?: string;
-}
-
-function StatCard({ label, value, sub }: StatCardProps) {
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="glass rounded-2xl p-5">
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{label}</p>
-      <p className="text-3xl font-semibold text-slate-800 dark:text-slate-100 tracking-tight">{value}</p>
-      {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
+    <div className="stat-card">
+      <div className="stat-card-label">{label}</div>
+      <div className="stat-card-value">{value}</div>
+      {sub && <div style={{ fontSize: ".8rem", color: "var(--text-muted)", marginTop: ".25rem" }}>{sub}</div>}
     </div>
   );
 }
@@ -32,10 +27,11 @@ function StatCard({ label, value, sub }: StatCardProps) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { dark } = useTheme();
+  const { dark, toggleTheme } = useTheme();
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
-  const [trends, setTrends] = useState<TrendData[]>([]);
+  const [trends,  setTrends]  = useState<TrendData[]>([]);
   const [ranking, setRanking] = useState<OccupancyData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== "ORGANIZER") { navigate("/"); return; }
@@ -48,175 +44,183 @@ export default function DashboardPage() {
       setMetrics(m.data);
       setTrends(t.data);
       setRanking(r.data);
-    });
-  }, [user, navigate]);
+    }).finally(() => setLoading(false));
+  }, [user]);
 
-  if (!metrics) {
+  if (loading) {
     return (
-      <div className="min-h-screen">
-        <Navbar backTo="/" />
-        <div className="flex items-center justify-center h-64">
-          <div className="glass rounded-2xl px-8 py-6 text-slate-500 dark:text-slate-400 text-sm">
-            Carregando dados…
-          </div>
-        </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <p>Carregando dashboard...</p>
       </div>
     );
   }
 
-  const totalEvents = metrics.occupancy.length;
-  const totalConfirmed = metrics.occupancy.reduce((s, e) => s + e.confirmed, 0);
-  const avgOccupancy = totalEvents
-    ? Math.round(metrics.occupancy.reduce((s, e) => s + e.occupancyPct, 0) / totalEvents)
+  if (!metrics) return null;
+
+  const totalEvents    = metrics.occupancy.length;
+  const totalInscritos = metrics.occupancy.reduce((s, r) => s + r.confirmed, 0);
+  const avgOccupancy   = totalEvents > 0
+    ? Math.round(metrics.occupancy.reduce((s, r) => s + r.occupancyPct, 0) / totalEvents)
     : 0;
 
-  const textColor = dark ? "#94a3b8" : "#64748b";
-  const gridColor = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
-  const tooltipStyle = {
-    backgroundColor: dark ? "rgba(30,32,48,0.95)" : "rgba(255,255,255,0.95)",
-    border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-    borderRadius: "12px",
-    color: dark ? "#e2e2ee" : "#1e1e2e",
-    fontSize: "13px",
-    backdropFilter: "blur(12px)",
-  };
-
   return (
-    <div className="min-h-screen">
-      <Navbar backTo="/" />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
-            Dashboard BI
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{user?.name}</p>
+    <>
+      {/* Navbar */}
+      <nav className="navbar">
+        <div className="navbar-brand">🎓 <span>EventHub</span> Acadêmico</div>
+        <div className="navbar-right">
+          <button className="btn btn-ghost btn-sm" onClick={toggleTheme}>{dark ? "☀️ Claro" : "🌙 Escuro"}</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate("/")}>← Voltar</button>
         </div>
+      </nav>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Total de eventos" value={totalEvents} />
-          <StatCard label="Inscrições confirmadas" value={totalConfirmed} />
-          <StatCard label="Ocupação média" value={`${avgOccupancy}%`} sub="média entre todos os eventos" />
-        </div>
-
-        {/* Charts — row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="glass rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-5 uppercase tracking-wider">
-              Taxa de Ocupação por Evento
-            </h2>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={metrics.occupancy} barSize={24}>
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: textColor }} axisLine={false} tickLine={false} />
-                <YAxis unit="%" tick={{ fontSize: 11, fill: textColor }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v) => [`${v}%`, "Ocupação"]} contentStyle={tooltipStyle} cursor={{ fill: "rgba(139,92,246,0.06)" }} />
-                <Bar dataKey="occupancyPct" fill="#8b5cf6" radius={[6, 6, 0, 0]} name="Ocupação" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="glass rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-5 uppercase tracking-wider">
-              Distribuição por Categoria
-            </h2>
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={metrics.categoryDistribution}
-                  dataKey="count"
-                  nameKey="category"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  innerRadius={45}
-                >
-                  {metrics.categoryDistribution.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend wrapperStyle={{ fontSize: "12px", color: textColor }} />
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
+      <main className="page">
+        <div className="section-header" style={{ marginBottom: "1.5rem" }}>
+          <div>
+            <h1>Dashboard BI</h1>
+            <p style={{ marginTop: ".25rem" }}>Métricas dos seus eventos, {user?.name}</p>
           </div>
         </div>
 
-        {/* Chart — row 2 */}
-        <div className="glass rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-5 uppercase tracking-wider">
-            Evolução de Inscrições por Semana
-          </h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={trends}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-              <XAxis
-                dataKey="week"
-                tick={{ fontSize: 11, fill: textColor }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-              />
-              <YAxis tick={{ fontSize: 11, fill: textColor }} axisLine={false} tickLine={false} />
-              <Tooltip
-                labelFormatter={(v) => new Date(v).toLocaleDateString("pt-BR")}
-                formatter={(v) => [v, "Inscrições"]}
-                contentStyle={tooltipStyle}
-              />
-              <Line
-                type="monotone"
-                dataKey="registrations"
-                stroke="#8b5cf6"
-                strokeWidth={2}
-                dot={{ fill: "#8b5cf6", r: 4 }}
-                activeDot={{ r: 6 }}
-                name="Inscrições"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        {/* Stat cards */}
+        <div className="stat-cards">
+          <StatCard label="Total de Eventos" value={totalEvents} />
+          <StatCard label="Total de Inscritos" value={totalInscritos} />
+          <StatCard label="Ocupação Média" value={`${avgOccupancy}%`} />
+          <StatCard
+            label="Evento Mais Popular"
+            value={ranking[0]?.name ?? "—"}
+            sub={ranking[0] ? `${ranking[0].occupancyPct}% de ocupação` : undefined}
+          />
         </div>
 
-        {/* Ranking table */}
-        <div className="glass rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/6">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              Ranking de Popularidade
-            </h2>
+        <div className="dashboard-grid">
+          {/* Gráfico de barras — Ocupação */}
+          <div className="dashboard-card" style={{ gridColumn: "1 / -1" }}>
+            <h2>Taxa de Ocupação por Evento</h2>
+            {metrics.occupancy.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={metrics.occupancy} margin={{ top: 4, right: 16, bottom: 40, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} />
+                  <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v) => [`${v}%`, "Ocupação"]} />
+                  <Bar dataKey="occupancyPct" fill="#6366f1" radius={[6, 6, 0, 0]} name="Ocupação" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200/40 dark:border-white/5">
-                  <th className="px-6 py-3 text-left w-10">#</th>
-                  <th className="px-6 py-3 text-left">Evento</th>
-                  <th className="px-6 py-3 text-right">Inscritos</th>
-                  <th className="px-6 py-3 text-right">Vagas</th>
-                  <th className="px-6 py-3 text-right">Ocupação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ranking.map((r, i) => (
-                  <tr
-                    key={r.id}
-                    className="border-b border-slate-200/30 dark:border-white/4 last:border-0 hover:bg-white/30 dark:hover:bg-white/2 transition-colors"
+
+          {/* Gráfico de pizza — Categorias */}
+          <div className="dashboard-card">
+            <h2>Distribuição por Categoria</h2>
+            {metrics.categoryDistribution.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={metrics.categoryDistribution}
+                    dataKey="count"
+                    nameKey="category"
+                    cx="50%" cy="50%"
+                    outerRadius={90}
+                    label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
                   >
-                    <td className="px-6 py-3.5 text-slate-400 dark:text-slate-500 font-mono">{i + 1}</td>
-                    <td className="px-6 py-3.5 text-slate-700 dark:text-slate-200 font-medium">{r.name}</td>
-                    <td className="px-6 py-3.5 text-right text-slate-600 dark:text-slate-300">{r.confirmed}</td>
-                    <td className="px-6 py-3.5 text-right text-slate-500 dark:text-slate-400">{r.totalSlots}</td>
-                    <td className="px-6 py-3.5 text-right">
-                      <span className={`font-medium ${r.occupancyPct >= 90 ? "text-rose-500 dark:text-rose-400" : r.occupancyPct >= 70 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                        {r.occupancyPct}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    {metrics.categoryDistribution.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Gráfico de linha — Tendência */}
+          <div className="dashboard-card">
+            <h2>Evolução de Inscrições por Semana</h2>
+            {trends.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={trends} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="week"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(v) => new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip labelFormatter={(v) => new Date(v).toLocaleDateString("pt-BR")} />
+                  <Line
+                    type="monotone"
+                    dataKey="registrations"
+                    stroke="#6366f1"
+                    strokeWidth={2.5}
+                    dot={{ r: 4, fill: "#6366f1" }}
+                    name="Inscrições"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Tabela — Ranking */}
+          <div className="dashboard-card full-width">
+            <h2>Ranking de Popularidade</h2>
+            {ranking.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Evento</th>
+                      <th style={{ textAlign: "right" }}>Inscritos</th>
+                      <th style={{ textAlign: "right" }}>Vagas</th>
+                      <th style={{ textAlign: "right" }}>Ocupação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranking.map((r, i) => (
+                      <tr key={r.id}>
+                        <td>
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            width: 26, height: 26, borderRadius: "50%",
+                            background: i === 0 ? "#fef3c7" : i === 1 ? "#f1f5f9" : "transparent",
+                            fontWeight: 700, fontSize: ".85rem",
+                            color: i === 0 ? "#92400e" : "var(--text-muted)",
+                          }}>
+                            {i + 1}
+                          </span>
+                        </td>
+                        <td><strong>{r.name}</strong></td>
+                        <td style={{ textAlign: "right" }}>{r.confirmed}</td>
+                        <td style={{ textAlign: "right" }}>{r.totalSlots}</td>
+                        <td style={{ textAlign: "right" }}>
+                          <span style={{
+                            fontWeight: 600,
+                            color: r.occupancyPct >= 80 ? "var(--danger)" : r.occupancyPct >= 50 ? "var(--warning)" : "var(--success)",
+                          }}>
+                            {r.occupancyPct}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

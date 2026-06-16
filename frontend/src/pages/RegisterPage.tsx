@@ -39,8 +39,8 @@ const labelClass =
 export default function RegisterPage() {
   const { dark, toggle } = useTheme();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "PARTICIPANT" as UserRole });
-  const [error, setError] = useState("");
+  const [form,    setForm]    = useState({ name: "", email: "", password: "", role: "PARTICIPANT" as UserRole });
+  const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -50,95 +50,56 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (form.password.length < 8) {
-      setError("Senha deve ter no mínimo 8 caracteres");
-      return;
-    }
+    if (form.password.length < 8) { setError("Senha deve ter no mínimo 8 caracteres."); return; }
     setLoading(true);
     try {
       await api.post("/auth/register", form);
-      navigate("/login");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
-      setError(msg ?? "Erro ao cadastrar. Tente novamente.");
+      navigate("/login", { state: { info: "Conta criada com sucesso! Faça login." } });
+    } catch (err: any) {
+      setError(err.response?.data?.error ?? "Erro ao cadastrar. Tente novamente.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <button
-        onClick={toggle}
-        className="glass fixed top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/5 transition-all cursor-pointer z-10"
-        aria-label={dark ? "Modo claro" : "Modo escuro"}
-      >
-        {dark ? <SunIcon /> : <MoonIcon />}
-      </button>
+    <div className="auth-page">
+      <div className="auth-grid" />
+      <div className="auth-bg-orbs"><span /><span /><span /><span /><span /><span /></div>
+      <div className="auth-card">
+        <div className="auth-logo">🎓 EventHub <span>Acadêmico</span></div>
+        <p className="auth-subtitle">Crie sua conta gratuitamente</p>
 
-      <div className="w-full max-w-md">
-        {/* Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-800 dark:bg-slate-200 shadow-xl shadow-slate-900/15 mb-4">
-            <span className="text-white dark:text-slate-900 text-lg font-bold tracking-wider">EH</span>
+        {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Nome completo</label>
+            <input name="name" placeholder="Seu nome" value={form.name} onChange={handleChange} required />
           </div>
-          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
-            EventHub Acadêmico
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Crie sua conta</p>
-        </div>
+          <div className="form-group">
+            <label>E-mail</label>
+            <input name="email" type="email" placeholder="seu@email.com" value={form.email} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <label>Senha</label>
+            <input name="password" type="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <label>Perfil</label>
+            <select name="role" value={form.role} onChange={handleChange}>
+              <option value="PARTICIPANT">Participante — me inscrevo em eventos</option>
+              <option value="ORGANIZER">Organizador — crio e gerencio eventos</option>
+            </select>
+          </div>
+          <button type="submit" className="btn btn-primary btn-lg" style={{ width: "100%", marginTop: ".25rem" }} disabled={loading}>
+            {loading ? "Criando conta..." : "Criar conta"}
+          </button>
+        </form>
 
-        {/* Card */}
-        <div className="glass-strong rounded-3xl p-8">
-          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-6">Cadastro</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className={labelClass}>Nome completo</label>
-              <input name="name" placeholder="Seu nome" value={form.name} onChange={handleChange} required className={inputClass} />
-            </div>
-
-            <div>
-              <label className={labelClass}>E-mail</label>
-              <input name="email" type="email" placeholder="seu@email.com" value={form.email} onChange={handleChange} required className={inputClass} />
-            </div>
-
-            <div>
-              <label className={labelClass}>Senha</label>
-              <input name="password" type="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={handleChange} required className={inputClass} />
-            </div>
-
-            <div>
-              <label className={labelClass}>Perfil</label>
-              <Select
-                options={ROLE_OPTIONS}
-                value={form.role}
-                onChange={(v) => setForm((f) => ({ ...f, role: v as UserRole }))}
-              />
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-50/80 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-500/20">
-                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl px-4 py-3 text-sm font-medium bg-slate-800 hover:bg-zinc-900 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white shadow-md shadow-slate-900/10 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-2"
-            >
-              {loading ? "Cadastrando…" : "Criar conta"}
-            </button>
-          </form>
-
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-6">
-            Já tem conta?{" "}
-            <Link to="/login" className="text-slate-700 dark:text-slate-300 underline decoration-slate-300 dark:decoration-slate-600 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors">
-              Entrar
-            </Link>
-          </p>
+        <div className="auth-divider" style={{ margin: "1rem 0" }} />
+        <div className="auth-footer">
+          Já tem conta? <Link to="/login">Entrar</Link>
         </div>
       </div>
     </div>

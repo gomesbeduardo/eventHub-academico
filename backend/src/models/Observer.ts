@@ -1,4 +1,5 @@
 import { Event } from "@prisma/client";
+import logger from "../utils/logger";
 
 // Observer Pattern (DP01)
 export interface EventObserver {
@@ -7,12 +8,19 @@ export interface EventObserver {
 
 export class VacancyObserver implements EventObserver {
   async update(event: Event): Promise<void> {
-    // Triggered after slot changes — downstream handlers (e.g. notifications) hook here
+    const availableSlots = event.totalSlots - event.usedSlots;
+    logger.info(
+      { eventId: event.id, eventName: event.name, availableSlots },
+      "VacancyObserver: vagas atualizadas"
+    );
   }
 }
 
 export class StatusObserver implements EventObserver {
   async update(event: Event): Promise<void> {
-    // Triggered to reflect updated status in API responses / caches
+    logger.info(
+      { eventId: event.id, eventName: event.name, status: event.status },
+      "StatusObserver: status do evento atualizado"
+    );
   }
 }
