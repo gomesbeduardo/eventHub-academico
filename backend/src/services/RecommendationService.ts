@@ -19,7 +19,7 @@ class ContentBasedStrategy implements RecommendationStrategy {
     const categories = topCategories.map((c) => c.category);
 
     return prisma.$queryRaw<Event[]>`
-      SELECT e.*, COUNT(r2.id) AS total_registrations
+      SELECT e.*, COUNT(r2.id)::int AS total_registrations
       FROM events e
       LEFT JOIN registrations r2 ON r2."eventId" = e.id AND r2.status = 'CONFIRMED'
       WHERE e.category = ANY(${categories}::text[])
@@ -38,7 +38,7 @@ class ContentBasedStrategy implements RecommendationStrategy {
 class PopularityBasedStrategy implements RecommendationStrategy {
   async recommend(_userId: string): Promise<Event[]> {
     return prisma.$queryRaw<Event[]>`
-      SELECT e.*, COUNT(r.id) AS total_registrations
+      SELECT e.*, COUNT(r.id)::int AS total_registrations
       FROM events e
       LEFT JOIN registrations r ON r."eventId" = e.id AND r.status = 'CONFIRMED'
       WHERE e.date >= NOW() AND e.status = 'AVAILABLE'

@@ -16,6 +16,12 @@ export const AuthController = {
         res.status(400).json({ error: "Senha deve ter no mínimo 8 caracteres" });
         return;
       }
+      // RF01 — valida formato do e-mail antes de confirmar o cadastro
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        res.status(400).json({ error: "Formato de e-mail inválido" });
+        return;
+      }
       const user = await authService.register({ name, email, password, role });
       res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
     } catch (err: any) {
