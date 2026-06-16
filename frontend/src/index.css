@@ -146,6 +146,41 @@ textarea { resize: vertical; min-height: 80px; }
   font-size: .875rem;
   color: var(--text-muted);
 }
+
+/* ── Settings (hambúrguer) ────────────────────────────────── */
+.settings-menu { position: relative; }
+.settings-toggle { font-size: 1.1rem; line-height: 1; }
+.settings-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .4rem);
+  min-width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: .35rem;
+  z-index: 210;
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: .55rem .65rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .9rem;
+  font-family: inherit;
+  color: var(--text);
+}
+.settings-item:hover { background: var(--bg); }
 .role-badge {
   display: inline-block;
   padding: .2rem .6rem;
@@ -290,7 +325,8 @@ tbody tr:last-child td { border-bottom: none; }
   position: fixed;
   inset: 0;
   background: rgba(15,23,42,.45);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;

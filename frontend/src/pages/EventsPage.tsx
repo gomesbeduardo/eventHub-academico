@@ -4,6 +4,15 @@ import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import api, { getRecommendations } from "../services/api";
 import { Event, EventCategory, EventStatus, Registration } from "../types";
+import SettingsMenu from "../components/SettingsMenu";
+
+interface ConfirmDialog {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  danger?: boolean;
+  onConfirm: () => void | Promise<void>;
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Tab = "events" | "recommended" | "history" | "my-events";
@@ -110,6 +119,11 @@ export default function EventsPage() {
   const [formError, setFormError] = useState("");
   const [formBusy, setFormBusy] = useState(false);
 
+  // Diálogos centralizados (substituem confirm()/alert() nativos)
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchEvents = useCallback(async () => {
     const params = new URLSearchParams();
@@ -155,26 +169,40 @@ export default function EventsPage() {
   }, [fetchRecommendations]);
 
   // ── Participant actions ──────────────────────────────────────────────────
-  async function handleRegister(eventId: string) {
-    try {
-      await api.post(`/events/${eventId}/register`);
-      fetchEvents();
-      fetchRecommendations();
-    } catch (err: any) {
-      alert(err.response?.data?.error ?? "Erro ao inscrever");
-    }
+  function handleRegister(event: Event) {
+    setConfirmDialog({
+      title: "Confirmar inscrição",
+      message: `Deseja se inscrever em "${event.name}"?`,
+      confirmLabel: "Inscrever-se",
+      onConfirm: async () => {
+        try {
+          await api.post(`/events/${event.id}/register`);
+          fetchEvents();
+          fetchRecommendations();
+        } catch (err: any) {
+          setFeedback(err.response?.data?.error ?? "Erro ao inscrever");
+        }
+      },
+    });
   }
 
-  async function handleCancel(eventId: string) {
-    if (!confirm("Confirma o cancelamento da inscrição?")) return;
-    try {
-      await api.delete(`/events/${eventId}/register`);
-      fetchEvents();
-      fetchHistory();
-      fetchRecommendations();
-    } catch (err: any) {
-      alert(err.response?.data?.error ?? "Erro ao cancelar");
-    }
+  function handleCancel(event: Event) {
+    setConfirmDialog({
+      title: "Cancelar inscrição",
+      message: `Confirma o cancelamento da inscrição em "${event.name}"?`,
+      confirmLabel: "Cancelar inscrição",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/events/${event.id}/register`);
+          fetchEvents();
+          fetchHistory();
+          fetchRecommendations();
+        } catch (err: any) {
+          setFeedback(err.response?.data?.error ?? "Erro ao cancelar");
+        }
+      },
+    });
   }
 
   // ── Form helpers ─────────────────────────────────────────────────────────
@@ -260,16 +288,22 @@ export default function EventsPage() {
     }
   }
 
-  async function handleDelete(event: Event) {
-    if (!confirm(`Excluir "${event.name}"? Esta ação não pode ser desfeita.`))
-      return;
-    try {
-      await api.delete(`/events/${event.id}`);
-      fetchMyEvents();
-      fetchEvents();
-    } catch (err: any) {
-      alert(err.response?.data?.error ?? "Erro ao excluir evento");
-    }
+  function handleDelete(event: Event) {
+    setConfirmDialog({
+      title: "Excluir evento",
+      message: `Excluir "${event.name}"? Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/events/${event.id}`);
+          fetchMyEvents();
+          fetchEvents();
+        } catch (err: any) {
+          setFeedback(err.response?.data?.error ?? "Erro ao excluir evento");
+        }
+      },
+    });
   }
 
   // ── Event Card ───────────────────────────────────────────────────────────
@@ -331,13 +365,13 @@ export default function EventsPage() {
             <>
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => handleRegister(event.id)}
+                onClick={() => handleRegister(event)}
               >
                 Inscrever-se
               </button>
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => handleCancel(event.id)}
+                onClick={() => handleCancel(event)}
               >
                 Cancelar inscrição
               </button>
@@ -383,16 +417,14 @@ export default function EventsPage() {
               📊 Dashboard BI
             </button>
           )}
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={toggleTheme}
-            title="Alternar tema"
-          >
-            {dark ? "☀️ Claro" : "🌙 Escuro"}
-          </button>
-          <button className="btn btn-ghost btn-sm" onClick={logout}>
-            Sair
-          </button>
+          <SettingsMenu>
+            <button className="settings-item" onClick={toggleTheme}>
+              {dark ? "☀️ Modo claro" : "🌙 Modo escuro"}
+            </button>
+            <button className="settings-item" onClick={logout}>
+              ↩ Sair
+            </button>
+          </SettingsMenu>
         </div>
       </nav>
 
@@ -852,6 +884,69 @@ export default function EventsPage() {
                 onClick={() => setShowRegistrants(false)}
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Confirmação (inscrição / cancelamento / exclusão) ── */}
+      {confirmDialog && (
+        <div className="modal-overlay" onClick={() => setConfirmDialog(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{confirmDialog.title}</h2>
+              <button className="modal-close" onClick={() => setConfirmDialog(null)}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: "var(--text)" }}>{confirmDialog.message}</p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-ghost"
+                onClick={() => setConfirmDialog(null)}
+                disabled={confirmBusy}
+              >
+                Voltar
+              </button>
+              <button
+                className={`btn ${confirmDialog.danger ? "btn-danger" : "btn-primary"}`}
+                disabled={confirmBusy}
+                onClick={async () => {
+                  setConfirmBusy(true);
+                  try {
+                    await confirmDialog.onConfirm();
+                  } finally {
+                    setConfirmBusy(false);
+                    setConfirmDialog(null);
+                  }
+                }}
+              >
+                {confirmBusy ? "Processando..." : confirmDialog.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Feedback / erro ── */}
+      {feedback && (
+        <div className="modal-overlay" onClick={() => setFeedback("")}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Aviso</h2>
+              <button className="modal-close" onClick={() => setFeedback("")}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: "var(--text)" }}>{feedback}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={() => setFeedback("")}>
+                Entendi
               </button>
             </div>
           </div>

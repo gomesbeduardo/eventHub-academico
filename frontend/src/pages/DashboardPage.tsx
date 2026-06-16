@@ -9,6 +9,7 @@ import {
 import api from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 import { AnalyticsMetrics, TrendData, OccupancyData } from "../types";
+import SettingsMenu from "../components/SettingsMenu";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
@@ -67,8 +68,12 @@ export default function DashboardPage() {
       <nav className="navbar">
         <button className="navbar-brand" onClick={() => navigate("/")} title="Ir para a página inicial"><span>EventHub</span> Acadêmico</button>
         <div className="navbar-right">
-          <button className="btn btn-ghost btn-sm" onClick={toggleTheme}>{dark ? "☀️ Claro" : "🌙 Escuro"}</button>
           <button className="btn btn-ghost btn-sm" onClick={() => navigate("/")}>← Voltar</button>
+          <SettingsMenu>
+            <button className="settings-item" onClick={toggleTheme}>
+              {dark ? "☀️ Modo claro" : "🌙 Modo escuro"}
+            </button>
+          </SettingsMenu>
         </div>
       </nav>
 
