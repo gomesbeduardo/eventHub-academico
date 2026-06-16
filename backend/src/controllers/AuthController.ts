@@ -53,17 +53,22 @@ export const AuthController = {
       }
 
       const token = await authService.requestPasswordReset(email);
+      let devResetLink: string | undefined;
       if (token) {
         const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
         const link = `${frontendUrl}/reset-password?token=${token}`;
         // Simulação de envio de e-mail: o link aparece no terminal do backend.
         logger.info({ email, link }, "password reset link (simulação de e-mail)");
+        // Fora de produção, devolve o link para a UI exibir (modo demonstração).
+        if (process.env.NODE_ENV !== "production") devResetLink = link;
       }
 
       // Resposta sempre idêntica — não revela se o e-mail existe.
       res.json({
         message:
           "Se o e-mail estiver cadastrado, um link de recuperação foi enviado.",
+        // presente apenas em ambiente de desenvolvimento
+        resetLink: devResetLink,
       });
     } catch (err: any) {
       res.status(400).json({ error: err.message });

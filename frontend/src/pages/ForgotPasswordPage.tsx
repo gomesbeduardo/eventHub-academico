@@ -5,6 +5,7 @@ import api from "../services/api";
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState("");
   const [message, setMessage] = useState("");
+  const [resetLink, setResetLink] = useState("");
   const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -12,10 +13,12 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError("");
     setMessage("");
+    setResetLink("");
     setLoading(true);
     try {
       const { data } = await api.post("/auth/forgot-password", { email });
       setMessage(data.message);
+      if (data.resetLink) setResetLink(data.resetLink);
     } catch {
       setError("Não foi possível processar a solicitação. Tente novamente.");
     } finally {
@@ -32,7 +35,15 @@ export default function ForgotPasswordPage() {
         <p className="auth-subtitle">Recuperação de senha</p>
 
         {message ? (
-          <div className="alert alert-success">{message}</div>
+          <>
+            <div className="alert alert-success">{message}</div>
+            {resetLink && (
+              <div className="alert" style={{ marginTop: "1rem", fontSize: "0.85rem", wordBreak: "break-all" }}>
+                <strong>Modo demonstração:</strong> em produção o link iria por e-mail. Aqui:{" "}
+                <Link to={resetLink.replace(/^https?:\/\/[^/]+/, "")}>Redefinir senha</Link>
+              </div>
+            )}
+          </>
         ) : (
           <>
             {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}
