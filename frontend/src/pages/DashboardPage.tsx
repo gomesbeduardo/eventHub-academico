@@ -8,10 +8,18 @@ import {
 } from "recharts";
 import api from "../services/api";
 import { useTheme } from "../context/ThemeContext";
-import { AnalyticsMetrics, TrendData, OccupancyData } from "../types";
+import { AnalyticsMetrics, TrendData, OccupancyData, OrganizerOption, EventCategory } from "../types";
 import SettingsMenu from "../components/SettingsMenu";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+
+const CATEGORIES: EventCategory[] = ["PALESTRA", "WORKSHOP", "MINICURSO", "SEMINARIO"];
+const CATEGORY_LABEL: Record<EventCategory, string> = {
+  PALESTRA: "Palestra",
+  WORKSHOP: "Workshop",
+  MINICURSO: "Minicurso",
+  SEMINARIO: "Seminário",
+};
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -30,23 +38,40 @@ export default function DashboardPage() {
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
   const [trends,  setTrends]  = useState<TrendData[]>([]);
   const [ranking, setRanking] = useState<OccupancyData[]>([]);
+  const [organizers, setOrganizers] = useState<OrganizerOption[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Filtros do dashboard global
+  const [filterOrg, setFilterOrg] = useState("");   // "" = todos os organizadores; "me" = os meus
+  const [filterCat, setFilterCat] = useState("");    // "" = todas as categorias
+
+  // Carrega a lista de organizadores uma vez (popular o filtro)
   useEffect(() => {
     if (!user || user.role !== "ORGANIZER") { navigate("/"); return; }
+    api.get("/analytics/organizers").then((r) => setOrganizers(r.data)).catch(() => setOrganizers([]));
+  }, [user]);
 
+  // Recarrega métricas sempre que um filtro muda
+  useEffect(() => {
+    if (!user || user.role !== "ORGANIZER") return;
+    const params: Record<string, string> = {};
+    if (filterOrg === "me") params.organizerId = user.id;
+    else if (filterOrg) params.organizerId = filterOrg;
+    if (filterCat) params.category = filterCat;
+
+    setLoading(true);
     Promise.all([
-      api.get(`/analytics/${user.id}/metrics`),
-      api.get(`/analytics/${user.id}/trends`),
-      api.get(`/analytics/${user.id}/ranking`),
+      api.get("/analytics/metrics", { params }),
+      api.get("/analytics/trends", { params }),
+      api.get("/analytics/ranking", { params }),
     ]).then(([m, t, r]) => {
       setMetrics(m.data);
       setTrends(t.data);
       setRanking(r.data);
     }).finally(() => setLoading(false));
-  }, [user]);
+  }, [user, filterOrg, filterCat]);
 
-  if (loading) {
+  if (loading && !metrics) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
         <p>Carregando dashboard...</p>
@@ -81,8 +106,44 @@ export default function DashboardPage() {
         <div className="section-header" style={{ marginBottom: "1.5rem" }}>
           <div>
             <h1>Dashboard BI</h1>
-            <p style={{ marginTop: ".25rem" }}>Métricas dos seus eventos, {user?.name}</p>
+            <p style={{ marginTop: ".25rem" }}>
+              Métricas de todos os eventos da plataforma. Use os filtros para refinar.
+            </p>
           </div>
+        </div>
+
+        {/* Filtros */}
+        <div className="filters-bar" style={{ marginBottom: "1.5rem" }}>
+          <div className="form-group" style={{ minWidth: 220 }}>
+            <label>Organizador</label>
+            <select value={filterOrg} onChange={(e) => setFilterOrg(e.target.value)}>
+              <option value="">Todos os organizadores</option>
+              <option value="me">Apenas os meus eventos</option>
+              {organizers
+                .filter((o) => o.id !== user?.id)
+                .map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+            </select>
+          </div>
+          <div className="form-group" style={{ minWidth: 200 }}>
+            <label>Categoria</label>
+            <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}>
+              <option value="">Todas as categorias</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
+              ))}
+            </select>
+          </div>
+          {(filterOrg || filterCat) && (
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ alignSelf: "flex-end" }}
+              onClick={() => { setFilterOrg(""); setFilterCat(""); }}
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
 
         {/* Stat cards */}
@@ -185,6 +246,7 @@ export default function DashboardPage() {
                     <tr>
                       <th>#</th>
                       <th>Evento</th>
+                      <th>Organizador</th>
                       <th style={{ textAlign: "right" }}>Inscritos</th>
                       <th style={{ textAlign: "right" }}>Vagas</th>
                       <th style={{ textAlign: "right" }}>Ocupação</th>
@@ -205,6 +267,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td><strong>{r.name}</strong></td>
+                        <td style={{ color: "var(--text-muted)" }}>{r.organizerName ?? "—"}</td>
                         <td style={{ textAlign: "right" }}>{r.confirmed}</td>
                         <td style={{ textAlign: "right" }}>{r.totalSlots}</td>
                         <td style={{ textAlign: "right" }}>

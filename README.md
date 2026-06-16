@@ -295,10 +295,10 @@ class RecommendationService {
 
 | Campo | Conteúdo |
 |-------|----------|
-| **Descrição** | O sistema deve apresentar ao Organizador um painel com métricas dos seus eventos: taxa de ocupação, distribuição por categoria, evolução de inscrições e ranking de popularidade. |
+| **Descrição** | O sistema deve apresentar ao Organizador um painel com métricas de todos os eventos da plataforma — taxa de ocupação, distribuição por categoria, evolução de inscrições e ranking de popularidade — com filtros por organizador e por categoria. |
 | **Ator** | Organizador |
 | **Prioridade** | Importante |
-| **Critérios de aceitação** | 1. A taxa de ocupação deve ser exibida em gráfico de barras. 2. A distribuição por categoria deve ser exibida em gráfico de pizza. 3. A evolução de inscrições deve ser exibida em gráfico de linha. 4. O ranking de ocupação deve ser exibido em tabela ordenada. 5. As métricas devem se restringir aos eventos do Organizador autenticado. |
+| **Critérios de aceitação** | 1. A taxa de ocupação deve ser exibida em gráfico de barras. 2. A distribuição por categoria deve ser exibida em gráfico de pizza. 3. A evolução de inscrições deve ser exibida em gráfico de linha. 4. O ranking de ocupação deve ser exibido em tabela ordenada, identificando o organizador de cada evento. 5. O painel deve permitir filtrar as métricas por organizador (incluindo a opção "apenas os meus eventos") e por categoria. |
 
 ### RF10 — Recomendação de Eventos *(Módulo BI)*
 
@@ -416,9 +416,12 @@ O módulo é dividido em dois sub-módulos com propósitos complementares. Ambos
 
 | Método | Rota | Descrição | Auth |
 |--------|------|-----------|------|
-| `GET` | `/api/analytics/:organizerId/metrics` | Taxa de ocupação + distribuição por categoria | JWT + Organizador |
-| `GET` | `/api/analytics/:organizerId/trends` | Evolução de inscrições por semana | JWT + Organizador |
-| `GET` | `/api/analytics/:organizerId/ranking` | Ranking de eventos por popularidade | JWT + Organizador |
+| `GET` | `/api/analytics/organizers` | Lista de organizadores (para o filtro) | JWT + Organizador |
+| `GET` | `/api/analytics/metrics` | Taxa de ocupação + distribuição por categoria | JWT + Organizador |
+| `GET` | `/api/analytics/trends` | Evolução de inscrições por semana | JWT + Organizador |
+| `GET` | `/api/analytics/ranking` | Ranking de eventos por popularidade | JWT + Organizador |
+
+> Os endpoints de Analytics aceitam filtros opcionais via query string: `?organizerId=<id>&category=<CATEGORIA>`. Sem filtros, retornam métricas de **todos** os eventos da plataforma.
 
 ### Recomendações
 

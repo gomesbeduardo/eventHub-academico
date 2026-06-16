@@ -28,10 +28,11 @@ router.post("/events/:id/register", authenticate, requireRole("PARTICIPANT"), Ev
 router.delete("/events/:id/register", authenticate, requireRole("PARTICIPANT"), EventController.cancel);
 router.get("/registrations/history", authenticate, requireRole("PARTICIPANT"), EventController.history);
 
-// Analytics — organizer
-router.get("/analytics/:organizerId/metrics", authenticate, requireRole("ORGANIZER"), AnalyticsController.metrics);
-router.get("/analytics/:organizerId/trends", authenticate, requireRole("ORGANIZER"), AnalyticsController.trends);
-router.get("/analytics/:organizerId/ranking", authenticate, requireRole("ORGANIZER"), AnalyticsController.ranking);
+// Analytics — global com filtros opcionais (?organizerId=&category=)
+router.get("/analytics/organizers", authenticate, requireRole("ORGANIZER"), AnalyticsController.organizers);
+router.get("/analytics/metrics", authenticate, requireRole("ORGANIZER"), AnalyticsController.metrics);
+router.get("/analytics/trends", authenticate, requireRole("ORGANIZER"), AnalyticsController.trends);
+router.get("/analytics/ranking", authenticate, requireRole("ORGANIZER"), AnalyticsController.ranking);
 
 // Recommendations — participant
 router.get("/recommendations/:participantId", authenticate, requireRole("PARTICIPANT"), RecommendationController.getRecommendations);

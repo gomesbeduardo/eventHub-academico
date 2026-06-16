@@ -36,9 +36,15 @@ export interface Registration {
 export interface OccupancyData {
   id: string;
   name: string;
+  organizerName?: string;
   totalSlots: number;
   confirmed: number;
   occupancyPct: number;
+}
+
+export interface OrganizerOption {
+  id: string;
+  name: string;
 }
 
 export interface CategoryData {

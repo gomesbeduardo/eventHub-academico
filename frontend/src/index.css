@@ -147,6 +147,14 @@ textarea { resize: vertical; min-height: 80px; }
   color: var(--text-muted);
 }
 
+/* ── Filtros (barra) ──────────────────────────────────────── */
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
 /* ── Settings (hambúrguer) ────────────────────────────────── */
 .settings-menu { position: relative; }
 .settings-toggle { font-size: 1.1rem; line-height: 1; }
