@@ -97,6 +97,13 @@ export class EventService {
     if (!event) throw new Error("Evento não encontrado");
     if (event.organizerId !== organizerId) throw new Error("Sem permissão");
 
+    const activeRegs = await this.registrationRepo.countConfirmedByEvent(eventId);
+    if (activeRegs > 0) {
+      throw new Error(
+        `Este evento possui ${activeRegs} inscrição(ões) ativa(s). Cancele as inscrições antes de excluir.`
+      );
+    }
+
     await this.eventRepo.delete(eventId);
   }
 
