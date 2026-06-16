@@ -2,21 +2,34 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend,
-  LineChart, Line, CartesianGrid,
+  LineChart, Line,
 } from "recharts";
 import api from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 import { AnalyticsMetrics, TrendData, OccupancyData } from "../types";
 
-const COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444"];
+const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-card-label">{label}</div>
+      <div className="stat-card-value">{value}</div>
+      {sub && <div style={{ fontSize: ".8rem", color: "var(--text-muted)", marginTop: ".25rem" }}>{sub}</div>}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { dark, toggleTheme } = useTheme();
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
-  const [trends, setTrends] = useState<TrendData[]>([]);
+  const [trends,  setTrends]  = useState<TrendData[]>([]);
   const [ranking, setRanking] = useState<OccupancyData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== "ORGANIZER") { navigate("/"); return; }
@@ -29,73 +42,183 @@ export default function DashboardPage() {
       setMetrics(m.data);
       setTrends(t.data);
       setRanking(r.data);
-    });
+    }).finally(() => setLoading(false));
   }, [user]);
 
-  if (!metrics) return <p>Carregando...</p>;
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <p>Carregando dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!metrics) return null;
+
+  const totalEvents    = metrics.occupancy.length;
+  const totalInscritos = metrics.occupancy.reduce((s, r) => s + r.confirmed, 0);
+  const avgOccupancy   = totalEvents > 0
+    ? Math.round(metrics.occupancy.reduce((s, r) => s + r.occupancyPct, 0) / totalEvents)
+    : 0;
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <button onClick={() => navigate("/")} style={{ marginBottom: "1rem" }}>← Voltar</button>
-      <h1>Dashboard BI — {user?.name}</h1>
+    <>
+      {/* Navbar */}
+      <nav className="navbar">
+        <div className="navbar-brand">🎓 <span>EventHub</span> Acadêmico</div>
+        <div className="navbar-right">
+          <button className="btn btn-ghost btn-sm" onClick={toggleTheme}>{dark ? "☀️ Claro" : "🌙 Escuro"}</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate("/")}>← Voltar</button>
+        </div>
+      </nav>
 
-      <h2>Taxa de Ocupação por Evento</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={metrics.occupancy}>
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis unit="%" />
-          <Tooltip formatter={(v) => `${v}%`} />
-          <Bar dataKey="occupancyPct" fill="#6366f1" name="Ocupação" />
-        </BarChart>
-      </ResponsiveContainer>
+      <main className="page">
+        <div className="section-header" style={{ marginBottom: "1.5rem" }}>
+          <div>
+            <h1>Dashboard BI</h1>
+            <p style={{ marginTop: ".25rem" }}>Métricas dos seus eventos, {user?.name}</p>
+          </div>
+        </div>
 
-      <h2>Distribuição por Categoria</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie data={metrics.categoryDistribution} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
-            {metrics.categoryDistribution.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-            ))}
-          </Pie>
-          <Legend />
-          <Tooltip />
-        </PieChart>
-      </ResponsiveContainer>
+        {/* Stat cards */}
+        <div className="stat-cards">
+          <StatCard label="Total de Eventos" value={totalEvents} />
+          <StatCard label="Total de Inscritos" value={totalInscritos} />
+          <StatCard label="Ocupação Média" value={`${avgOccupancy}%`} />
+          <StatCard
+            label="Evento Mais Popular"
+            value={ranking[0]?.name ?? "—"}
+            sub={ranking[0] ? `${ranking[0].occupancyPct}% de ocupação` : undefined}
+          />
+        </div>
 
-      <h2>Evolução de Inscrições por Semana</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={trends}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="week" tickFormatter={(v) => new Date(v).toLocaleDateString("pt-BR")} />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="registrations" stroke="#6366f1" name="Inscrições" />
-        </LineChart>
-      </ResponsiveContainer>
+        <div className="dashboard-grid">
+          {/* Gráfico de barras — Ocupação */}
+          <div className="dashboard-card" style={{ gridColumn: "1 / -1" }}>
+            <h2>Taxa de Ocupação por Evento</h2>
+            {metrics.occupancy.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={metrics.occupancy} margin={{ top: 4, right: 16, bottom: 40, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} />
+                  <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v) => [`${v}%`, "Ocupação"]} />
+                  <Bar dataKey="occupancyPct" fill="#6366f1" radius={[6, 6, 0, 0]} name="Ocupação" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
-      <h2>Ranking de Popularidade</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ background: "#f3f4f6" }}>
-            <th style={{ padding: "0.5rem", textAlign: "left" }}>#</th>
-            <th style={{ padding: "0.5rem", textAlign: "left" }}>Evento</th>
-            <th style={{ padding: "0.5rem", textAlign: "right" }}>Inscritos</th>
-            <th style={{ padding: "0.5rem", textAlign: "right" }}>Vagas</th>
-            <th style={{ padding: "0.5rem", textAlign: "right" }}>Ocupação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ranking.map((r, i) => (
-            <tr key={r.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={{ padding: "0.5rem" }}>{i + 1}</td>
-              <td style={{ padding: "0.5rem" }}>{r.name}</td>
-              <td style={{ padding: "0.5rem", textAlign: "right" }}>{r.confirmed}</td>
-              <td style={{ padding: "0.5rem", textAlign: "right" }}>{r.totalSlots}</td>
-              <td style={{ padding: "0.5rem", textAlign: "right" }}>{r.occupancyPct}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          {/* Gráfico de pizza — Categorias */}
+          <div className="dashboard-card">
+            <h2>Distribuição por Categoria</h2>
+            {metrics.categoryDistribution.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={metrics.categoryDistribution}
+                    dataKey="count"
+                    nameKey="category"
+                    cx="50%" cy="50%"
+                    outerRadius={90}
+                    label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {metrics.categoryDistribution.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Gráfico de linha — Tendência */}
+          <div className="dashboard-card">
+            <h2>Evolução de Inscrições por Semana</h2>
+            {trends.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={trends} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="week"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(v) => new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip labelFormatter={(v) => new Date(v).toLocaleDateString("pt-BR")} />
+                  <Line
+                    type="monotone"
+                    dataKey="registrations"
+                    stroke="#6366f1"
+                    strokeWidth={2.5}
+                    dot={{ r: 4, fill: "#6366f1" }}
+                    name="Inscrições"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Tabela — Ranking */}
+          <div className="dashboard-card full-width">
+            <h2>Ranking de Popularidade</h2>
+            {ranking.length === 0 ? (
+              <p style={{ textAlign: "center", padding: "2rem" }}>Sem dados ainda.</p>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Evento</th>
+                      <th style={{ textAlign: "right" }}>Inscritos</th>
+                      <th style={{ textAlign: "right" }}>Vagas</th>
+                      <th style={{ textAlign: "right" }}>Ocupação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranking.map((r, i) => (
+                      <tr key={r.id}>
+                        <td>
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            width: 26, height: 26, borderRadius: "50%",
+                            background: i === 0 ? "#fef3c7" : i === 1 ? "#f1f5f9" : "transparent",
+                            fontWeight: 700, fontSize: ".85rem",
+                            color: i === 0 ? "#92400e" : "var(--text-muted)",
+                          }}>
+                            {i + 1}
+                          </span>
+                        </td>
+                        <td><strong>{r.name}</strong></td>
+                        <td style={{ textAlign: "right" }}>{r.confirmed}</td>
+                        <td style={{ textAlign: "right" }}>{r.totalSlots}</td>
+                        <td style={{ textAlign: "right" }}>
+                          <span style={{
+                            fontWeight: 600,
+                            color: r.occupancyPct >= 80 ? "var(--danger)" : r.occupancyPct >= 50 ? "var(--warning)" : "var(--success)",
+                          }}>
+                            {r.occupancyPct}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
