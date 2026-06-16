@@ -508,7 +508,7 @@ Preencher o `.env`:
 DATABASE_URL="postgresql://user:password@localhost:5432/eventhub_db"
 JWT_SECRET="seu_segredo_aqui"
 JWT_EXPIRES_IN="7d"
-PORT=3001
+PORT=3002
 NODE_ENV=development
 ```
 
@@ -528,7 +528,7 @@ npm run dev
 
 Acesse: [http://localhost:5173](http://localhost:5173)
 
-O frontend já está configurado com proxy para `http://localhost:3001` via Vite.
+O frontend já está configurado com proxy para `http://localhost:3002` via Vite.
 
 ### Scripts disponíveis
 
