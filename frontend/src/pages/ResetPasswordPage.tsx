@@ -34,7 +34,7 @@ export default function ResetPasswordPage() {
         <div className="auth-grid" />
         <div className="auth-bg-orbs"><span /><span /><span /><span /><span /><span /></div>
         <div className="auth-card">
-          <div className="auth-logo">🎓 EventHub <span>Acadêmico</span></div>
+          <div className="auth-logo"> EventHub <span>Acadêmico</span></div>
           <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
             Link de recuperação inválido ou já utilizado.
           </div>

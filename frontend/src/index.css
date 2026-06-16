@@ -130,7 +130,12 @@ textarea { resize: vertical; min-height: 80px; }
   font-weight: 700;
   color: var(--primary);
   text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
 }
+.navbar-brand:hover { opacity: .85; }
 .navbar-brand span { color: var(--text); }
 .navbar-right {
   display: flex;
@@ -152,6 +157,9 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .role-badge.organizer { background: var(--primary-light); color: var(--primary-dark); }
 .role-badge.participant { background: var(--success-light); color: #065f46; }
+/* Dark mode: fundos escuros exigem texto claro para legibilidade */
+[data-theme="dark"] .role-badge.organizer { color: var(--primary); }
+[data-theme="dark"] .role-badge.participant { color: var(--success); }
 
 /* ── Tabs ─────────────────────────────────────────────────── */
 .tabs {

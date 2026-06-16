@@ -65,7 +65,7 @@ export default function DashboardPage() {
     <>
       {/* Navbar */}
       <nav className="navbar">
-        <div className="navbar-brand">🎓 <span>EventHub</span> Acadêmico</div>
+        <button className="navbar-brand" onClick={() => navigate("/")} title="Ir para a página inicial"><span>EventHub</span> Acadêmico</button>
         <div className="navbar-right">
           <button className="btn btn-ghost btn-sm" onClick={toggleTheme}>{dark ? "☀️ Claro" : "🌙 Escuro"}</button>
           <button className="btn btn-ghost btn-sm" onClick={() => navigate("/")}>← Voltar</button>

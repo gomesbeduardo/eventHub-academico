@@ -33,7 +33,7 @@ export default function RegisterPage() {
       <div className="auth-grid" />
       <div className="auth-bg-orbs"><span /><span /><span /><span /><span /><span /></div>
       <div className="auth-card">
-        <div className="auth-logo">🎓 EventHub <span>Acadêmico</span></div>
+        <div className="auth-logo"> EventHub <span>Acadêmico</span></div>
         <p className="auth-subtitle">Crie sua conta gratuitamente</p>
 
         {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}

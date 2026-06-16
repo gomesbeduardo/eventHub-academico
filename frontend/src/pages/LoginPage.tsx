@@ -68,7 +68,7 @@ export default function LoginPage() {
       <div ref={blob2Ref} className="auth-blob auth-blob-2" />
 
       <div className="auth-card" ref={cardRef}>
-        <div className="auth-logo">🎓 EventHub <span>Acadêmico</span></div>
+        <div className="auth-logo"> EventHub <span>Acadêmico</span></div>
         <p className="auth-subtitle">Acesse sua conta para continuar</p>
 
         {info  && <div className="alert alert-success" style={{ marginBottom: "1rem" }}>{info}</div>}
