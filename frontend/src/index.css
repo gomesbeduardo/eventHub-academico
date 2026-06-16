@@ -203,6 +203,15 @@ textarea { resize: vertical; min-height: 80px; }
 /* Dark mode: fundos escuros exigem texto claro para legibilidade */
 [data-theme="dark"] .role-badge.organizer { color: var(--primary); }
 [data-theme="dark"] .role-badge.participant { color: var(--success); }
+[data-theme="dark"] .alert-error,
+[data-theme="dark"] .badge-full,
+[data-theme="dark"] .badge-cancelled { color: var(--danger); }
+[data-theme="dark"] .alert-success,
+[data-theme="dark"] .badge-available,
+[data-theme="dark"] .badge-confirmed { color: var(--success); }
+[data-theme="dark"] .badge-category,
+[data-theme="dark"] .registrant-avatar { color: var(--primary); }
+[data-theme="dark"] .badge-finished { background: var(--bg); color: var(--text-muted); }
 
 /* ── Tabs ─────────────────────────────────────────────────── */
 .tabs {
@@ -210,6 +219,8 @@ textarea { resize: vertical; min-height: 80px; }
   gap: .25rem;
   border-bottom: 2px solid var(--border);
   margin-bottom: 1.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .tab-btn {
   padding: .625rem 1.25rem;
@@ -222,6 +233,8 @@ textarea { resize: vertical; min-height: 80px; }
   margin-bottom: -2px;
   cursor: pointer;
   transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .tab-btn:hover { color: var(--primary); }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
@@ -538,13 +551,26 @@ tbody tr:last-child td { border-bottom: none; }
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .navbar { padding: 0 1rem; }
+  .navbar-right { gap: .4rem; }
+  .navbar-brand { font-size: 1rem; }
   .page { padding: 1.25rem 1rem; }
   .form-row { grid-template-columns: 1fr; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .stat-cards { grid-template-columns: 1fr 1fr; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: .75rem; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .modal { max-width: 100%; }
+  h1 { font-size: 1.3rem; }
+}
+@media (max-width: 600px) {
+  /* esconde saudação para a navbar caber em telas estreitas */
+  .navbar-user { display: none; }
 }
 @media (max-width: 480px) {
   .stat-cards { grid-template-columns: 1fr; }
   .filters-bar { flex-direction: column; align-items: stretch; }
   .filters-bar select { width: 100%; }
+  .stat-card-value { font-size: 1.6rem; }
+  .auth-card { padding: 2rem 1.25rem; }
+  .btn-sm { padding: .35rem .6rem; }
 }
