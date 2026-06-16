@@ -20,4 +20,8 @@ api.interceptors.response.use(
   }
 );
 
+export function getRecommendations(participantId: string) {
+  return api.get(`/recommendations/${participantId}`);
+}
+
 export default api;
