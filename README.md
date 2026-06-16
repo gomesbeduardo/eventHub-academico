@@ -518,8 +518,14 @@ NODE_ENV=development
 ```bash
 npm install
 npm run prisma:migrate   # cria as tabelas no banco
+npm run seed             # (opcional) popula dados de demonstração
 npm run dev              # inicia em modo desenvolvimento
 ```
+
+> **Dados de demonstração:** `npm run seed` cria 2 organizadores, 3 participantes e
+> 4 eventos com inscrições (ocupação variada, um evento lotado) para a apresentação do
+> dashboard. É idempotente — pode rodar mais de uma vez sem duplicar. Login: senha `senha1234`
+> para `orga@eventhub.com`, `orgb@eventhub.com`, `participante@eventhub.com` (e `2`, `3`).
 
 ### 3. Frontend
 
