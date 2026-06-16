@@ -1,23 +1,24 @@
 # EventHub Acadêmico — Tarefas Pendentes
 
-> Documento de distribuição de atividades. Base: análise do repositório em 15/06/2026.
-> Estado atual: backend compila e roda, frontend compila e roda, PostgreSQL + Prisma OK, 3 Design Patterns presentes.
-> Foco desta rodada: fechar os requisitos prometidos no README que ainda não estão implementados + garantir o ponto extra de observabilidade.
+> Documento de distribuição de atividades. Atualizado em 16/06/2026 após merge do trabalho dos devs (branch `source`) na `main`.
+> Estado atual: backend e frontend compilam (`tsc` exit 0), PostgreSQL + Prisma OK, 3 Design Patterns presentes, app consolidado na `main`.
 
 ---
 
-## Resumo do que falta (visão rápida)
+## Resumo (status atual)
 
-| Prioridade | Item | Responsável sugerido |
-|-----------|------|----------------------|
-| 🔴 Alta | RF10.2 — Widget de recomendações no frontend | Dev 2 |
-| 🔴 Alta | Observabilidade — middleware de log de requisições (BÔNUS) | Dev 1 |
-| 🟠 Média | Observer com lógica real (não só casca) | Dev 2 |
-| 🟠 Média | RF02 — Recuperação de senha por e-mail **OU** remover do escopo | Dev 1 |
-| 🟢 Baixa | Preencher nomes da equipe no README | PO |
-| 🟢 Baixa | Documento de Requisitos no template da aula (doc separado) | PO |
+| Status | Item | Responsável |
+|--------|------|-------------|
+| ✅ Feito | RF10.2 — Widget de recomendações no frontend (aba "recommended" em EventsPage) | Dev 2 |
+| ✅ Feito | Observabilidade — `requestLogger` + `errorLogger` + endpoint `/metrics` (BÔNUS) | Dev 1 |
+| ✅ Feito | Observer com lógica real (logs em VacancyObserver/StatusObserver) | Dev 2 |
+| ✅ Feito | RF02 — Recuperação de senha (forgot/reset-password + páginas) | Dev 1 |
+| ⬜ Pendente | Preencher nomes da equipe no README | PO |
+| ⬜ Pendente | Documento de Requisitos no template da aula (doc separado) | PO |
 
-Regra do enunciado: **todo requisito declarado tem que estar implementado.** Se não der pra implementar, tem que sair do README. Não pode ficar prometido e faltando.
+Regra do enunciado: **todo requisito declarado tem que estar implementado.** Os requisitos do código estão cobertos. Faltam apenas itens de documentação/entrega do PO.
+
+> Histórico das tarefas originais mantido abaixo para referência.
 
 ---
 
