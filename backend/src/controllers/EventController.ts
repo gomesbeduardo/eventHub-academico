@@ -46,7 +46,7 @@ export const EventController = {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const event = await eventService.updateEvent(req.params.id as string, req.user!.id, req.body);
+      const event = await eventService.updateEvent(req.params.id, req.user!.id, req.body);
       res.json(event);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -55,7 +55,7 @@ export const EventController = {
 
   async remove(req: AuthRequest, res: Response) {
     try {
-      await eventService.deleteEvent(req.params.id as string, req.user!.id);
+      await eventService.deleteEvent(req.params.id, req.user!.id);
       res.status(204).send();
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -64,7 +64,7 @@ export const EventController = {
 
   async register(req: AuthRequest, res: Response) {
     try {
-      const reg = await eventService.registerParticipant(req.params.id as string, req.user!.id);
+      const reg = await eventService.registerParticipant(req.params.id, req.user!.id);
       res.status(201).json(reg);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -73,7 +73,7 @@ export const EventController = {
 
   async cancel(req: AuthRequest, res: Response) {
     try {
-      await eventService.cancelRegistration(req.params.id as string, req.user!.id);
+      await eventService.cancelRegistration(req.params.id, req.user!.id);
       res.status(204).send();
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -82,7 +82,7 @@ export const EventController = {
 
   async registrations(req: AuthRequest, res: Response) {
     try {
-      const list = await eventService.getEventRegistrations(req.params.id as string, req.user!.id);
+      const list = await eventService.getEventRegistrations(req.params.id, req.user!.id);
       res.json(list);
     } catch (err: any) {
       res.status(400).json({ error: err.message });

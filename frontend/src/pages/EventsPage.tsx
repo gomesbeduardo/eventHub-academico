@@ -27,46 +27,7 @@ const EMPTY_FORM: EventForm = {
   date: "", location: "", totalSlots: "",
 };
 
-const CATEGORY_LABEL: Record<EventCategory, string> = {
-  PALESTRA: "Palestra",
-  WORKSHOP: "Workshop",
-  MINICURSO: "Minicurso",
-  SEMINARIO: "Seminário",
-};
-
-const CATEGORY_COLOR: Record<EventCategory, string> = {
-  PALESTRA:  "bg-stone-100/80 text-stone-600 dark:bg-stone-500/15 dark:text-stone-300",
-  WORKSHOP:  "bg-amber-100/80 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  MINICURSO: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  SEMINARIO: "bg-zinc-100/80 text-zinc-600 dark:bg-zinc-500/15 dark:text-zinc-300",
-};
-
-const STATUS_COLOR: Record<EventStatus, string> = {
-  AVAILABLE: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  FULL:      "bg-rose-100/80 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
-  FINISHED:  "bg-slate-100/80 text-slate-500 dark:bg-slate-500/15 dark:text-slate-400",
-};
-
-const STATUS_LABEL: Record<EventStatus, string> = {
-  AVAILABLE: "Disponível",
-  FULL:      "Lotado",
-  FINISHED:  "Encerrado",
-};
-
-const CATEGORY_OPTIONS = [
-  { value: "", label: "Todas as categorias" },
-  { value: "PALESTRA",  label: "Palestra"  },
-  { value: "WORKSHOP",  label: "Workshop"  },
-  { value: "MINICURSO", label: "Minicurso" },
-  { value: "SEMINARIO", label: "Seminário" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "",          label: "Todos os status" },
-  { value: "AVAILABLE", label: "Disponível"      },
-  { value: "FULL",      label: "Lotado"          },
-  { value: "FINISHED",  label: "Encerrado"       },
-];
+const CATEGORIES: EventCategory[] = ["PALESTRA", "WORKSHOP", "MINICURSO", "SEMINARIO"];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function formatDate(d: string) {

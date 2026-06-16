@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../context/ThemeContext";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend,
@@ -10,7 +9,6 @@ import {
 import api from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 import { AnalyticsMetrics, TrendData, OccupancyData } from "../types";
-import Navbar from "../components/Navbar";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
