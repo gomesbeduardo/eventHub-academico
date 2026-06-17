@@ -124,9 +124,10 @@ export class EventService {
       registration = await this.registrationRepo.create({ userId, eventId });
     }
 
+    // Atualiza só o contador de vagas. A transição de status (AVAILABLE/FULL)
+    // é responsabilidade do StatusObserver, disparado por notify() (DP01).
     const newUsedSlots = event.usedSlots + 1;
-    const newStatus: EventStatus = newUsedSlots >= event.totalSlots ? "FULL" : "AVAILABLE";
-    await this.eventRepo.update(eventId, { usedSlots: newUsedSlots, status: newStatus });
+    await this.eventRepo.update(eventId, { usedSlots: newUsedSlots });
 
     await this.notify(eventId);
     return registration;
@@ -146,8 +147,10 @@ export class EventService {
 
     await this.registrationRepo.updateStatus(registration.id, "CANCELLED");
 
+    // Libera a vaga (contador). O StatusObserver reavalia e reabre o evento
+    // (FULL → AVAILABLE) via notify() quando passa a haver vaga (DP01).
     const newUsedSlots = Math.max(0, event.usedSlots - 1);
-    await this.eventRepo.update(eventId, { usedSlots: newUsedSlots, status: "AVAILABLE" });
+    await this.eventRepo.update(eventId, { usedSlots: newUsedSlots });
 
     await this.notify(eventId);
   }

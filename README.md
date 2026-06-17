@@ -122,13 +122,13 @@ Cada camada se comunica apenas com a camada imediatamente abaixo. Os módulos de
 
 **Problema:** Quando um evento atinge o limite de vagas, múltiplos componentes precisam reagir (bloquear inscrições, atualizar status). Sem o Observer, o `EventService` teria referências diretas a cada módulo, criando acoplamento rígido.
 
-**Onde:** `EventService` (RF07). O serviço notifica os Observers registrados toda vez que o status de vagas muda.
+**Onde:** `EventService` (RF07). Após cada inscrição/cancelamento o serviço atualiza o contador de vagas e chama `notify()`, que dispara os Observers. A **regra de transição de status** (AVAILABLE/FULL) vive no `StatusObserver`, não inline no serviço.
 
 ```
-EventService
+EventService.notify()
     │
-    ├── VacancyObserver  →  atualiza contador no banco
-    └── StatusObserver   →  reflete status na resposta da API
+    ├── VacancyObserver  →  audita (loga) as vagas restantes
+    └── StatusObserver   →  deriva AVAILABLE/FULL e persiste a mudança no banco
 ```
 
 **Por que:** Desacopla o serviço central das reações periféricas. Adicionar novas reações não exige alterar o `EventService` (Open/Closed Principle).

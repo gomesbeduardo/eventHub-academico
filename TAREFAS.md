@@ -11,7 +11,7 @@
 |--------|------|-------------|
 | ✅ Feito | RF10.2 — Widget de recomendações no frontend (aba "recommended" em EventsPage) | Dev 2 |
 | ✅ Feito | Observabilidade — `requestLogger` + `errorLogger` + endpoint `/metrics` (BÔNUS) | Dev 1 |
-| ✅ Feito | Observer com lógica real (logs em VacancyObserver/StatusObserver) | Dev 2 |
+| ✅ Feito | Observer com lógica real (StatusObserver é dono da transição AVAILABLE/FULL; VacancyObserver audita vagas) | Dev 2 |
 | ✅ Feito | RF02 — Recuperação de senha (forgot/reset-password + páginas) | Dev 1 |
 | ⬜ Pendente | Preencher nomes da equipe no README | PO |
 | ⬜ Pendente | Documento de Requisitos no template da aula (doc separado) | PO |
