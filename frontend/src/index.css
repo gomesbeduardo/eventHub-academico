@@ -2,23 +2,14 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Scrollbars ───────────────────────────────────────────────
-   Remove os botões de seta (subir/descer) das scrollbars nativas,
-   que apareciam à direita das abas em alguns temas (GTK/Linux).
-   Mantém a barra de rolagem funcional, só sem as flechas. */
-* { scrollbar-width: thin; }                 /* Firefox: barra fina, sem setas */
+   Remove as flechas (subir/descer) das scrollbars nativas, que o tema
+   GTK/Linux desenhava à direita das abas no Chrome. Barra de rolagem
+   continua funcional, só sem os botões de seta.
+   IMPORTANTE: não usar `scrollbar-width` aqui — quando presente, o
+   Chrome entra num modo híbrido que ignora o `::-webkit-scrollbar-button`
+   e mantém as flechas do tema do sistema. */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-/* Esconde TODAS as variações de botão de seta, inclusive os single-button
-   (setas isoladas de incremento/decremento que o GTK/Chrome desenha). */
-::-webkit-scrollbar-button,
-::-webkit-scrollbar-button:single-button,
-::-webkit-scrollbar-button:vertical:start,
-::-webkit-scrollbar-button:vertical:end,
-::-webkit-scrollbar-button:horizontal:start,
-::-webkit-scrollbar-button:horizontal:end {
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-}
+::-webkit-scrollbar-button { display: none; height: 0; width: 0; }
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 999px;
