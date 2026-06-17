@@ -62,6 +62,15 @@ export const EventController = {
     }
   },
 
+  async close(req: AuthRequest, res: Response) {
+    try {
+      const event = await eventService.closeEvent(req.params.id, req.user!.id);
+      res.json(event);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  },
+
   async register(req: AuthRequest, res: Response) {
     try {
       const reg = await eventService.registerParticipant(req.params.id, req.user!.id);

@@ -31,6 +31,9 @@ export class StatusObserver implements EventObserver {
   private eventRepo = new EventRepository();
 
   async update(event: Event): Promise<void> {
+    // Evento encerrado (manual ou por horário) não volta a AVAILABLE/FULL.
+    if (event.status === "FINISHED") return;
+
     const newStatus = event.usedSlots >= event.totalSlots ? "FULL" : "AVAILABLE";
 
     if (event.status !== newStatus) {

@@ -2,6 +2,7 @@ import { EventCategory, EventStatus } from "@prisma/client";
 import { EventRepository } from "../repositories/EventRepository";
 import { RegistrationRepository } from "../repositories/RegistrationRepository";
 import { EventObserver, VacancyObserver, StatusObserver } from "../models/Observer";
+import logger from "../utils/logger";
 
 // RF03 — categorias válidas vêm direto do enum do Prisma
 // (PALESTRA, WORKSHOP, MINICURSO, SEMINARIO). Sem lista hard-coded duplicada.
@@ -55,11 +56,41 @@ export class EventService {
     status?: EventStatus;
     dateFrom?: Date;
   }) {
+    // RF07 — encerra por horário antes de listar: a lista sempre reflete
+    // eventos vencidos como FINISHED, sem depender só do scheduler.
+    await this.closeExpiredEvents();
     return this.eventRepo.findAll(filters);
   }
 
   async getOrganizerEvents(organizerId: string) {
+    await this.closeExpiredEvents();
     return this.eventRepo.findByOrganizer(organizerId);
+  }
+
+  /**
+   * Encerramento manual (organizador). Bloqueia novas inscrições e tira o
+   * evento da lista de disponíveis. Só o dono encerra.
+   */
+  async closeEvent(eventId: string, organizerId: string) {
+    const event = await this.eventRepo.findById(eventId);
+    if (!event) throw new Error("Evento não encontrado");
+    if (event.organizerId !== organizerId) throw new Error("Sem permissão");
+    if (event.status === "FINISHED") throw new Error("Evento já está encerrado");
+
+    return this.eventRepo.update(eventId, { status: "FINISHED" });
+  }
+
+  /**
+   * Encerramento automático por horário (RF07). Marca como FINISHED todo
+   * evento cuja data já passou. Chamado pelo scheduler do server e antes
+   * de cada listagem. Idempotente.
+   */
+  async closeExpiredEvents(): Promise<number> {
+    const count = await this.eventRepo.markFinishedPastEvents(new Date());
+    if (count > 0) {
+      logger.info({ count }, "Eventos encerrados automaticamente por horário");
+    }
+    return count;
   }
 
   async updateEvent(
@@ -110,6 +141,9 @@ export class EventService {
   async registerParticipant(eventId: string, userId: string) {
     const event = await this.eventRepo.findById(eventId);
     if (!event) throw new Error("Evento não encontrado");
+    if (event.status === "FINISHED" || new Date(event.date) < new Date()) {
+      throw new Error("Evento encerrado");
+    }
     if (event.status === "FULL") throw new Error("Evento lotado");
 
     const existing = await this.registrationRepo.findByUserAndEvent(userId, eventId);

@@ -288,6 +288,24 @@ export default function EventsPage() {
     }
   }
 
+  function handleClose(event: Event) {
+    setConfirmDialog({
+      title: "Encerrar evento",
+      message: `Encerrar "${event.name}"? As inscrições serão bloqueadas e o evento sai da lista de disponíveis. Esta ação não pode ser desfeita.`,
+      confirmLabel: "Encerrar",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await api.patch(`/events/${event.id}/close`);
+          fetchMyEvents();
+          fetchEvents();
+        } catch (err: any) {
+          setFeedback(err.response?.data?.error ?? "Erro ao encerrar evento");
+        }
+      },
+    });
+  }
+
   function handleDelete(event: Event) {
     setConfirmDialog({
       title: "Excluir evento",
@@ -354,6 +372,14 @@ export default function EventsPage() {
               >
                 ✏️ Editar
               </button>
+              {event.status !== "FINISHED" && (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => handleClose(event)}
+                >
+                  🔒 Encerrar
+                </button>
+              )}
               <button
                 className="btn btn-danger btn-sm"
                 onClick={() => handleDelete(event)}
@@ -512,6 +538,7 @@ export default function EventsPage() {
                 <option value="">Todos os status</option>
                 <option value="AVAILABLE">Disponível</option>
                 <option value="FULL">Lotado</option>
+                <option value="FINISHED">Encerrado</option>
               </select>
             </div>
             {events.length === 0 ? (

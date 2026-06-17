@@ -59,4 +59,16 @@ export class EventRepository {
   async delete(id: string): Promise<void> {
     await prisma.event.delete({ where: { id } });
   }
+
+  /**
+   * Fecha em lote os eventos cuja data já passou e que ainda não estão
+   * encerrados. Usado pelo encerramento automático por horário.
+   */
+  async markFinishedPastEvents(now: Date): Promise<number> {
+    const result = await prisma.event.updateMany({
+      where: { date: { lt: now }, status: { not: "FINISHED" } },
+      data: { status: "FINISHED" },
+    });
+    return result.count;
+  }
 }

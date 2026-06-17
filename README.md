@@ -241,10 +241,10 @@ class RecommendationService {
 
 | Campo | Conteúdo |
 |-------|----------|
-| **Descrição** | O sistema deve permitir que o Organizador crie, edite e exclua eventos contendo nome, descrição, categoria, data, horário, local e número de vagas. |
+| **Descrição** | O sistema deve permitir que o Organizador crie, edite, encerre e exclua eventos contendo nome, descrição, categoria, data, horário, local e número de vagas. |
 | **Ator** | Organizador |
 | **Prioridade** | Essencial |
-| **Critérios de aceitação** | 1. A categoria deve ser escolhida de lista pré-definida (`Palestra`, `Workshop`, `Minicurso`, `Seminário`). 2. A data do evento deve ser igual ou posterior à data atual. 3. Somente o Organizador criador pode editar ou excluir o evento. 4. A exclusão de evento com inscrições ativas deve exigir confirmação explícita. 5. O Organizador deve poder visualizar a lista de inscritos de cada evento. |
+| **Critérios de aceitação** | 1. A categoria deve ser escolhida de lista pré-definida (`Palestra`, `Workshop`, `Minicurso`, `Seminário`). 2. A data do evento deve ser igual ou posterior à data atual. 3. Somente o Organizador criador pode editar, encerrar ou excluir o evento. 4. A exclusão de evento com inscrições ativas deve exigir confirmação explícita. 5. O Organizador deve poder visualizar a lista de inscritos de cada evento. 6. O Organizador deve poder encerrar manualmente um evento (status `Encerrado`), bloqueando novas inscrições. |
 
 ### RF04 — Inscrição em Eventos
 
@@ -271,16 +271,16 @@ class RecommendationService {
 | **Descrição** | O sistema deve permitir que usuários autenticados consultem a listagem de eventos, com filtros por data, status e categoria. |
 | **Ator** | Participante, Organizador |
 | **Prioridade** | Essencial |
-| **Critérios de aceitação** | 1. Cada item deve exibir nome, categoria, data, horário, local, vagas disponíveis e status. 2. O status deve ser `Disponível` ou `Lotado`. 3. Os filtros por data, status e categoria devem estar disponíveis. 4. Na área de gerenciamento, o Organizador deve visualizar apenas os próprios eventos. |
+| **Critérios de aceitação** | 1. Cada item deve exibir nome, categoria, data, horário, local, vagas disponíveis e status. 2. O status deve ser `Disponível`, `Lotado` ou `Encerrado`. 3. Os filtros por data, status e categoria devem estar disponíveis. 4. Na área de gerenciamento, o Organizador deve visualizar apenas os próprios eventos. |
 
 ### RF07 — Controle Automático de Vagas
 
 | Campo | Conteúdo |
 |-------|----------|
-| **Descrição** | O sistema deve atualizar automaticamente o número de vagas e o status do evento a cada inscrição ou cancelamento. |
+| **Descrição** | O sistema deve atualizar automaticamente o número de vagas e o status do evento a cada inscrição/cancelamento e encerrar eventos cuja data já passou. |
 | **Ator** | Sistema (automático) |
 | **Prioridade** | Essencial |
-| **Critérios de aceitação** | 1. O contador deve ser decrementado a cada inscrição confirmada e incrementado a cada cancelamento. 2. Ao atingir zero vagas, o status deve mudar para `Lotado`. 3. Com status `Lotado`, novas inscrições devem ser bloqueadas no backend. 4. A atualização deve refletir na interface sem recarregar a página. |
+| **Critérios de aceitação** | 1. O contador deve ser decrementado a cada inscrição confirmada e incrementado a cada cancelamento. 2. Ao atingir zero vagas, o status deve mudar para `Lotado`. 3. Com status `Lotado`, novas inscrições devem ser bloqueadas no backend. 4. A atualização deve refletir na interface sem recarregar a página. 5. Eventos cuja data/horário já passou devem ser encerrados automaticamente (status `Encerrado`), por verificação periódica e na listagem. A transição de vagas (`Disponível`/`Lotado`) é responsabilidade do `StatusObserver` (DP01). |
 
 ### RF08 — Histórico
 
@@ -406,6 +406,7 @@ O módulo é dividido em dois sub-módulos com propósitos complementares. Ambos
 | `POST` | `/api/events` | Criar evento | JWT + Organizador |
 | `GET` | `/api/events/mine` | Eventos do organizador autenticado | JWT + Organizador |
 | `PUT` | `/api/events/:id` | Editar evento | JWT + Organizador |
+| `PATCH` | `/api/events/:id/close` | Encerrar evento manualmente | JWT + Organizador |
 | `DELETE` | `/api/events/:id` | Excluir evento | JWT + Organizador |
 | `GET` | `/api/events/:id/registrations` | Lista de inscritos | JWT + Organizador |
 | `POST` | `/api/events/:id/register` | Inscrever-se no evento | JWT + Participante |
@@ -572,6 +573,7 @@ O frontend já está configurado com proxy para `http://localhost:3002` via Vite
 | RF03.2 | Edição de evento pelo Organizador | Média | Dev 1 |
 | RF03.3 | Exclusão de evento com confirmação | Média | Dev 1 |
 | RF03.4 | Visualização da lista de inscritos pelo Organizador | Média | Dev 2 |
+| RF03.5 | Encerramento de evento (manual pelo Organizador + automático por horário) | Média | Dev 2 |
 | RF04 | Inscrição de Participante em evento disponível | Alta | Dev 2 |
 | RF05 | Cancelamento de inscrição com liberação de vaga | Alta | Dev 2 |
 | RF06 | Listagem de eventos com filtros por data, status e categoria | Alta | Dev 2 |

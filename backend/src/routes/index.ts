@@ -20,6 +20,7 @@ router.get("/events", authenticate, EventController.list);
 router.post("/events", authenticate, requireRole("ORGANIZER"), EventController.create);
 router.get("/events/mine", authenticate, requireRole("ORGANIZER"), EventController.myEvents);
 router.put("/events/:id", authenticate, requireRole("ORGANIZER"), EventController.update);
+router.patch("/events/:id/close", authenticate, requireRole("ORGANIZER"), EventController.close);
 router.delete("/events/:id", authenticate, requireRole("ORGANIZER"), EventController.remove);
 router.get("/events/:id/registrations", authenticate, requireRole("ORGANIZER"), EventController.registrations);
 

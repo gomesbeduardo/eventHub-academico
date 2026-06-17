@@ -4,6 +4,7 @@ import cors from "cors";
 import router from "./routes";
 import logger from "./utils/logger";
 import { requestLogger, errorLogger, getMetrics } from "./middlewares/requestLogger";
+import { EventService } from "./services/EventService";
 
 const app = express();
 
@@ -23,5 +24,16 @@ app.use(errorLogger);
 
 const PORT = Number(process.env.PORT ?? 3001);
 app.listen(PORT, () => logger.info(`Server running on port ${PORT}`));
+
+// RF07 — encerramento automático por horário: fecha eventos vencidos no
+// boot e a cada 60s. O log de cada lote cai na observabilidade (Pino).
+const eventService = new EventService();
+const CLOSE_INTERVAL_MS = 60_000;
+const runAutoClose = () =>
+  eventService
+    .closeExpiredEvents()
+    .catch((err) => logger.error(err, "Falha ao encerrar eventos vencidos"));
+runAutoClose();
+setInterval(runAutoClose, CLOSE_INTERVAL_MS);
 
 export default app;
