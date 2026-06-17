@@ -22,7 +22,7 @@ class ContentBasedStrategy implements RecommendationStrategy {
       SELECT e.*, COUNT(r2.id)::int AS total_registrations
       FROM events e
       LEFT JOIN registrations r2 ON r2."eventId" = e.id AND r2.status = 'CONFIRMED'
-      WHERE e.category = ANY(${categories}::text[])
+      WHERE e.category::text = ANY(${categories}::text[])
         AND e.date >= NOW()
         AND e.status = 'AVAILABLE'
         AND e.id NOT IN (
