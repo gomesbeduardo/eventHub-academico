@@ -1,6 +1,19 @@
 /* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Scrollbars ───────────────────────────────────────────────
+   Remove os botões de seta (subir/descer) das scrollbars nativas,
+   que apareciam à direita das abas em alguns temas (GTK/Linux).
+   Mantém a barra de rolagem funcional, só sem as flechas. */
+* { scrollbar-width: thin; }                 /* Firefox: barra fina, sem setas */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-button { display: none; height: 0; width: 0; }  /* esconde as flechas */
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
 :root {
   --primary:       #6366f1;
   --primary-dark:  #4f46e5;
