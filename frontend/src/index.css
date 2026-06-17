@@ -7,7 +7,18 @@
    Mantém a barra de rolagem funcional, só sem as flechas. */
 * { scrollbar-width: thin; }                 /* Firefox: barra fina, sem setas */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-button { display: none; height: 0; width: 0; }  /* esconde as flechas */
+/* Esconde TODAS as variações de botão de seta, inclusive os single-button
+   (setas isoladas de incremento/decremento que o GTK/Chrome desenha). */
+::-webkit-scrollbar-button,
+::-webkit-scrollbar-button:single-button,
+::-webkit-scrollbar-button:vertical:start,
+::-webkit-scrollbar-button:vertical:end,
+::-webkit-scrollbar-button:horizontal:start,
+::-webkit-scrollbar-button:horizontal:end {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 999px;
